@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel do Pátio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12161f;
+    --surface:#1a2029;
+    --surface-2:#212938;
+    --border:#2c3546;
+    --text:#e7eaf0;
+    --text-muted:#8b93a8;
+    --amber:#f5a623;
+    --amber-dim:#3a2e18;
+    --blue:#3e8ff7;
+    --blue-dim:#182335;
+    --green:#34c77b;
+    --green-dim:#173427;
+    --slate:#64748b;
+    --slate-dim:#232a35;
+    --red:#f0555a;
+    --red-dim:#3a1a1c;
+    --teal:#2dd4c8;
+    --teal-dim:#123331;
+    --purple:#a78bfa;
+    --purple-dim:#26203f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top left, rgba(245,166,35,0.05), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Oswald',sans-serif; text-transform:uppercase;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  .hazard{
+    height:6px;
+    background:repeating-linear-gradient(135deg, var(--amber) 0 14px, #12161f 14px 28px);
+    opacity:0.85;
+  }
+
+  header{
+    padding:20px 24px 16px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+  }
+  @media (max-width:560px){
+    header{ padding:14px 16px 12px; }
+    main{ padding:14px 14px 40px; }
+  }
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand h1{font-size:22px; letter-spacing:0.5px; margin:0; font-weight:700;}
+  .brand span{color:var(--text-muted); font-size:12px; letter-spacing:1px;}
+
+  .sync{font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green); box-shadow:0 0 0 3px rgba(52,199,123,0.15);}
+
+  .sidebar-nav{display:flex; flex-direction:column; gap:2px;}
+  .sidebar-nav button{
+    display:flex; align-items:center; gap:10px; border:none; background:transparent; color:var(--text-muted);
+    padding:12px 14px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; text-align:left;
+    font-family:'Inter',sans-serif; transition:.15s; border-left:3px solid transparent;
+  }
+  .sidebar-nav button:hover{background:var(--surface-2); color:var(--text);}
+  .sidebar-nav button.active{background:var(--surface-2); color:var(--text); border-left-color:var(--amber);}
+  .nav-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+
+  main{max-width:1180px; margin:0 auto; padding:20px 24px 60px; display:grid; grid-template-columns:340px 1fr; gap:20px;}
+  main.main-portaria{ grid-template-columns:360px 1fr; }
+  @media (max-width:880px){ main{grid-template-columns:1fr;} main.main-portaria{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.2);
+  }
+  .card h2{font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin:0 0 14px; font-weight:600;}
+
+  label{display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; margin-top:12px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=password], input[type=date]{
+    width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:11px 12px; border-radius:9px; font-size:15px; font-family:'JetBrains Mono',monospace; letter-spacing:1px;
+  }
+  input[type=date]{ font-family:'Inter',sans-serif; letter-spacing:normal; color-scheme:dark; }
+  input#driverInput{font-family:'Inter',sans-serif; letter-spacing:normal;}
+  input:focus{outline:none; border-color:var(--amber);}
+
+  select{
+    width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:11px 12px; border-radius:9px; font-size:14px; font-family:'Inter',sans-serif;
+  }
+  select:focus{outline:none; border-color:var(--amber);}
+
+  .user-item{
+    display:flex; justify-content:space-between; align-items:center; padding:10px 12px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:9px; margin-bottom:8px;
+  }
+  .user-item .u-name{font-size:13px; font-weight:600;}
+  .user-item .u-role{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;}
+  .user-item .u-remove{
+    background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; line-height:1; padding:2px 6px;
+  }
+
+  .btn{
+    width:100%; margin-top:16px; background:var(--amber); color:#1a1206; border:none;
+    padding:12px; border-radius:9px; font-weight:700; font-size:14px; cursor:pointer;
+    font-family:'Inter',sans-serif; letter-spacing:0.3px;
+  }
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn.secondary{background:var(--surface-2); color:var(--text); border:1px solid var(--border);}
+  .btn.small{width:auto; padding:8px 12px; font-size:12px; margin-top:0;}
+
+  .stat-row{display:flex; gap:10px; margin-top:6px; flex-wrap:wrap;}
+  .stat-row .stat{min-width:90px;}
+  .stat{flex:1; background:var(--surface-2); border-radius:9px; padding:10px; text-align:center;}
+  .stat b{display:block; font-size:20px; font-family:'Oswald',sans-serif;}
+  .stat span{font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;}
+
+  .queue{display:flex; flex-direction:column; gap:10px;}
+  .truck{
+    display:grid; grid-template-columns:56px 1fr auto; gap:14px; align-items:center;
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px;
+    position:relative; overflow:hidden;
+  }
+  @media (max-width:560px){
+    .truck{ grid-template-columns:44px 1fr; }
+    .truck .actions{ grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+    .truck .actions .btn{ width:auto; flex:1; min-width:120px; }
+  }
+  .truck::before{content:''; position:absolute; left:0; top:0; bottom:0; width:4px;}
+  .truck.st-fila::before{background:var(--slate);}
+  .truck.st-faturando::before{background:var(--amber);}
+  .truck.st-carregando::before{background:var(--teal);}
+  .truck.st-descarregando::before{background:var(--purple);}
+  .truck.st-liberado::before{background:var(--green);}
+  .truck.st-cancelado::before{background:var(--red);}
+  .truck.op-carregamento{ background: linear-gradient(180deg, rgba(62,143,247,0.08), rgba(62,143,247,0.02)), var(--surface); }
+  .truck.op-descarga{ background: linear-gradient(180deg, rgba(167,139,250,0.10), rgba(167,139,250,0.03)), var(--surface); }
+
+  .num{
+    font-family:'Oswald',sans-serif; font-weight:700; font-size:26px; text-align:center;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 0;
+    color:var(--text); position:relative;
+  }
+  .num small{display:block; font-size:9px; color:var(--text-muted); font-weight:500; letter-spacing:0.5px; font-family:'Inter',sans-serif; text-transform:uppercase;}
+
+  .info .plate{font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:700; letter-spacing:1.5px;}
+  .info .driver{font-size:13px; color:var(--text-muted); margin-top:2px;}
+  .product-tag{
+    display:inline-flex; align-items:center; gap:5px; margin-top:7px;
+    background:var(--purple-dim); color:var(--purple); border:1px solid rgba(167,139,250,0.4);
+    font-size:12px; font-weight:700; padding:5px 11px; border-radius:7px;
+  }
+  .overnight-tag{
+    display:inline-flex; align-items:center; gap:5px; margin-top:7px;
+    background:var(--amber-dim); color:var(--amber); border:1px solid rgba(245,166,35,0.5);
+    font-size:12px; font-weight:700; padding:5px 11px; border-radius:7px;
+  }
+  .info .meta{font-size:11px; color:var(--text-muted); margin-top:6px; display:flex; gap:12px; flex-wrap:wrap;}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 10px;
+    border-radius:99px; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;
+  }
+  .pill.st-fila{background:var(--slate-dim); color:var(--slate);}
+  .pill.st-faturando{background:var(--amber-dim); color:var(--amber);}
+  .pill.st-carregando{background:var(--teal-dim); color:var(--teal);}
+  .pill.st-descarregando{background:var(--purple-dim); color:var(--purple);}
+  .pill.st-liberado{background:var(--green-dim); color:var(--green);}
+  .pill.st-cancelado{background:var(--red-dim); color:var(--red);}
+  .pill.op-carregamento{background:var(--blue-dim); color:var(--blue);}
+  .pill.op-descarga{background:var(--purple-dim); color:var(--purple);}
+
+  .op-filter{display:flex; gap:6px; margin-bottom:14px;}
+  .sub-heading{
+    font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);
+    margin:18px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
+  .sub-heading:first-child{ margin-top:0; }
+  .sub-heading.op-heading-carregamento{ color:var(--blue); border-bottom-color:rgba(62,143,247,0.35); }
+  .sub-heading.op-heading-descarga{ color:var(--purple); border-bottom-color:rgba(167,139,250,0.35); }
+
+  #queueColumnsWrapper.split{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+  #queueColumnsWrapper.split #carregamentoSection,
+  #queueColumnsWrapper.split #descargaSection{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:16px;
+  }
+  @media (max-width:900px){ #queueColumnsWrapper.split{ grid-template-columns:1fr; } }
+  .op-filter button{
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+    padding:7px 13px; border-radius:99px; font-size:12px; font-weight:600; cursor:pointer;
+    font-family:'Inter',sans-serif; transition:.15s;
+  }
+  .op-filter button.active{background:var(--amber); color:#1a1206; border-color:var(--amber);}
+
+  .op-toggle{display:flex; gap:8px; margin-top:6px;}
+  .op-toggle button{
+    flex:1; border:1px solid var(--border); background:var(--surface-2); color:var(--text);
+    padding:11px; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .op-toggle button.active.op-carregamento{background:var(--blue); color:#08172e; border-color:var(--blue);}
+  .op-toggle button.active.op-descarga{background:var(--purple); color:#1c1330; border-color:var(--purple);}
+
+  .actions{display:flex; gap:8px; flex-direction:column;}
+
+  .empty{text-align:center; padding:50px 20px; color:var(--text-muted);}
+  .empty .display{font-size:40px; color:var(--border); margin-bottom:8px;}
+
+  .hist-item{display:flex; justify-content:space-between; align-items:center; padding:12px 10px; border-bottom:1px solid var(--border); font-size:13px; cursor:pointer; border-radius:8px; transition:.12s;}
+  .hist-item:hover{background:var(--surface-2);}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-item .p{font-family:'JetBrains Mono',monospace; font-weight:700; letter-spacing:1px;}
+  .hist-item .d{color:var(--text-muted); font-size:11px; margin-top:3px;}
+  .hist-item .num-badge{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:7px; padding:4px 9px;
+    font-family:'Oswald',sans-serif; font-weight:700; font-size:13px; margin-right:10px;
+  }
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(6,8,12,0.72); z-index:50;
+    align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px;
+    width:100%; max-width:560px;
+  }
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .modal-head h2{font-size:15px; text-transform:uppercase; letter-spacing:1px; color:var(--text);}
+  .modal-close{background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted); width:30px; height:30px; border-radius:8px; font-size:18px; cursor:pointer; line-height:1;}
+  .detail-row{display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row span:first-child{color:var(--text-muted);}
+  .empty-modal{text-align:center; padding:30px; color:var(--text-muted); font-size:13px;}
+
+  .log-item{
+    display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--border);
+    font-size:12.5px;
+  }
+  .log-item:last-child{border-bottom:none;}
+  .log-item .l-action{color:var(--text);}
+  .log-item .l-meta{color:var(--text-muted); font-size:11px; white-space:nowrap;}
+
+  .link-danger{
+    display:block; width:100%; text-align:center; background:none; border:none; margin-top:14px;
+    color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;
+    font-family:'Inter',sans-serif; padding:4px;
+  }
+  .link-danger:hover{ color:var(--red); }
+
+  .gate{
+    display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px;
+  }
+  .gate.open{display:flex;}
+  .gate-box{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px;
+    width:100%; max-width:360px; text-align:center;
+  }
+  @media (max-width:380px){ .gate-box{ padding:24px 18px; } }
+  .gate-box input{margin-top:4px;}
+  .gate-btn{
+    width:100%; display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:18px; border-radius:12px; cursor:pointer; margin-bottom:12px; transition:.15s;
+  }
+  .gate-btn:hover{border-color:var(--amber);}
+  .gate-btn .display{font-size:17px;}
+  .gate-btn span:last-child{font-size:12px; color:var(--text-muted); font-family:'Inter',sans-serif;}
+  .btn.small{width:auto; padding:8px 14px; font-size:12px; margin-top:0;}
+  #adminScreen.viewer-mode #sidebarNavCard{ display:none; }
+  .user-badge{
+    font-size:12px; color:var(--text); background:var(--surface-2); border:1px solid var(--border);
+    padding:6px 12px; border-radius:99px; font-weight:600; white-space:nowrap;
+  }
+  .user-badge::before{content:'●'; color:var(--green); font-size:9px; margin-right:6px;}
+  #adminScreen.viewer-mode #adminExtras{ display:none !important; }
+  #adminScreen.viewer-mode #viewerStats{ display:flex !important; }
+  #adminScreen.viewer-mode main{ grid-template-columns:1fr; }
+
+  .report-view{ display:none; }
+
+  .report-overlay{
+    display:none; position:fixed; inset:0; background:var(--bg); z-index:60;
+    flex-direction:column;
+  }
+  .report-overlay.open{ display:flex; }
+  .report-toolbar{
+    display:flex; justify-content:space-between; align-items:center; padding:14px 22px;
+    background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; gap:10px;
+  }
+  .report-toolbar h2{ margin:0; font-size:14px; text-transform:uppercase; letter-spacing:1px; color:var(--text); }
+  .report-toolbar .actions{ display:flex; align-items:center; gap:10px; }
+  .report-page-wrap{ flex:1; overflow:auto; padding:28px; display:flex; justify-content:center; }
+  .report-page{
+    background:#fff; color:#111; width:100%; max-width:960px; padding:34px 38px;
+    border-radius:6px; font-family:'Inter',Arial,sans-serif; height:fit-content;
+  }
+  .report-page h1{ font-size:19px; margin:0 0 2px; font-family:'Oswald',sans-serif; text-transform:uppercase; }
+  .report-page .r-meta{ font-size:11px; color:#555; margin-bottom:4px; }
+  .report-page .r-summary{ font-size:12px; color:#333; margin-bottom:16px; }
+  .report-page .r-section-title{
+    font-size:13px; text-transform:uppercase; letter-spacing:0.5px; font-family:'Inter',Arial,sans-serif;
+    margin:22px 0 8px; padding-bottom:5px; border-bottom:2px solid #ddd; font-weight:700;
+  }
+  .report-page .r-section-title:first-of-type{ margin-top:6px; }
+  .report-page .r-section-carregamento{ color:#1d5ba6; border-bottom-color:#1d5ba6; }
+  .report-page .r-section-descarga{ color:#6d3fc9; border-bottom-color:#6d3fc9; }
+  .report-page table{ width:100%; border-collapse:collapse; font-size:11px; }
+  @media (max-width:600px){
+    .report-page{ padding:18px 16px; }
+    .report-page-wrap{ padding:10px; }
+  }
+  .report-page th{ background:#eee; text-align:left; border:1px solid #999; padding:6px 7px; }
+  .report-page td{ border:1px solid #ccc; padding:6px 7px; }
+  .report-page tr.r-day-sep td{ background:#f2f2f2; font-weight:700; border-top:2px solid #999; }
+
+  @media print{
+    body > *:not(.report-overlay){ display:none !important; }
+    .report-overlay{ position:static !important; display:block !important; background:#fff !important; }
+    .no-print{ display:none !important; }
+    .report-page-wrap{ padding:0 !important; overflow:visible !important; display:block !important; }
+    .report-page{ max-width:100% !important; border-radius:0 !important; padding:0 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gateScreen">
+  <div class="gate-box">
+    <h1 class="display" style="font-size:26px; margin-bottom:6px;">Painel do Pátio</h1>
+    <p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Selecione como deseja entrar</p>
+    <p id="dbStatus" style="font-size:11px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; gap:6px;"></p>
+    <button class="gate-btn" data-role="portaria">
+      <span class="display">Portaria</span>
+      <span>Registrar entrada de caminhões</span>
+    </button>
+    <button class="gate-btn" data-role="admin">
+      <span class="display">Painel administrativo</span>
+      <span>Faturamento, expedição e usuários</span>
+    </button>
+    <button class="gate-btn" data-role="viewer">
+      <span class="display">Monitoramento</span>
+      <span>Acompanhar a fila do pátio em tempo real</span>
+    </button>
+  </div>
+</div>
+
+<div class="gate" id="loginScreen">
+  <div class="gate-box">
+    <h1 class="display" style="font-size:22px; margin-bottom:6px;" id="loginTitle">Acesso</h1>
+    <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Digite sua senha</p>
+    <input type="password" id="loginPassword" placeholder="Senha" style="text-align:center; letter-spacing:4px;">
+    <p id="loginError" style="color:var(--red); font-size:12px; display:none; margin:8px 0 0;">Senha incorreta.</p>
+    <button class="btn" id="loginSubmit" style="margin-top:16px;">Entrar</button>
+    <button class="btn secondary" id="loginBack" style="margin-top:10px;">Voltar</button>
+  </div>
+</div>
+
+<div id="portariaScreen" style="display:none;">
+  <header>
+    <div class="brand">
+      <h1 class="display">Portaria</h1>
+      <span id="dateLabelPortaria"></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div class="sync"><span class="dot"></span><span id="syncLabelPortaria">sincronizado</span></div>
+      <span class="user-badge" id="userBadgePortaria"></span>
+      <button class="btn secondary small" id="portariaLogout">Sair</button>
+    </div>
+  </header>
+  <div class="hazard"></div>
+  <main class="main-portaria">
+    <div class="card">
+      <h2>Registrar chegada</h2>
+      <label>Tipo de operação</label>
+      <div class="op-toggle" id="operationToggle">
+        <button type="button" class="op-carregamento active" data-op="carregamento">Carregamento</button>
+        <button type="button" class="op-descarga" data-op="descarga">Descarga</button>
+      </div>
+      <label for="plateInput" style="margin-top:14px;">Placa</label>
+      <input type="text" id="plateInput" maxlength="8" placeholder="ABC1D23" list="platesList" autocomplete="off">
+      <datalist id="platesList"></datalist>
+      <label for="driverInput">Motorista</label>
+      <input type="text" id="driverInput" placeholder="Nome completo" list="driverNamesList" autocomplete="off">
+      <datalist id="driverNamesList"></datalist>
+      <div id="productTypeGroup" style="display:none;">
+        <label for="productTypeInput">Tipo de produto</label>
+        <input type="text" id="productTypeInput" placeholder="Ex: Grãos, Cimento, Insumos..." list="productTypesList" autocomplete="off">
+        <datalist id="productTypesList"></datalist>
+      </div>
+      <button class="btn" id="registerBtn">Registrar entrada no pátio</button>
+    </div>
+    <div class="card">
+      <h2>Caminhões no pátio agora</h2>
+      <h3 class="sub-heading">Carregamento</h3>
+      <div class="queue" id="queueBoxPortariaCarregamento"></div>
+      <h3 class="sub-heading">Descarga</h3>
+      <div class="queue" id="queueBoxPortariaDescarga"></div>
+    </div>
+  </main>
+</div>
+
+<div id="adminScreen" style="display:none;">
+<header>
+  <div class="brand">
+    <h1 class="display" id="screenTitle">Painel Administrativo</h1>
+    <span id="dateLabel"></span>
+  </div>
+  <div style="display:flex; align-items:center; gap:18px;">
+    <div class="sync"><span class="dot"></span><span id="syncLabel">sincronizado</span></div>
+    <span class="user-badge" id="userBadgeAdmin"></span>
+    <button class="btn secondary small" id="adminLogout">Sair</button>
+  </div>
+</header>
+<div class="hazard"></div>
+
+<main>
+  <div id="adminExtras" style="display:flex; flex-direction:column; gap:20px;">
+    <div class="card" id="sidebarNavCard" style="padding:10px;">
+      <div class="sidebar-nav" id="roleSwitch">
+        <button data-role="geral" class="active"><span class="nav-dot" style="background:var(--slate)"></span>Visão geral</button>
+        <button data-role="faturamento"><span class="nav-dot" style="background:var(--amber)"></span>Faturamento</button>
+        <button data-role="expedicao"><span class="nav-dot" style="background:var(--blue)"></span>Expedição</button>
+        <button data-role="descarga"><span class="nav-dot" style="background:var(--purple)"></span>Descarga</button>
+        <button data-role="historico"><span class="nav-dot" style="background:var(--teal)"></span>Histórico</button>
+        <button data-role="usuarios"><span class="nav-dot" style="background:var(--green)"></span>Usuários</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Hoje</h2>
+      <div class="stat-row">
+        <div class="stat"><b id="statFila">0</b><span>Na fila</span></div>
+        <div class="stat"><b id="statAndamento">0</b><span>Em processo</span></div>
+        <div class="stat"><b id="statLiberado">0</b><span>Liberados</span></div>
+        <div class="stat"><b id="statCancelado" style="color:var(--red)">0</b><span>Cancelados</span></div>
+      </div>
+      <button class="btn secondary" id="toggleHist" style="margin-top:16px;">Ver caminhões liberados</button>
+      <button class="btn secondary" id="toggleCanceled" style="margin-top:10px;">Ver cancelados</button>
+      <button class="btn secondary" id="generateReport" style="margin-top:10px;">Gerar relatório para impressão</button>
+    </div>
+  </div>
+
+  <div class="card" id="queueCard">
+    <h2 id="queueCardTitle">Fila do pátio</h2>
+    <div class="stat-row" id="viewerStats" style="display:none; margin-bottom:16px;">
+      <div class="stat"><b id="statFilaV" style="color:var(--slate)">0</b><span>Aguardando</span></div>
+      <div class="stat"><b id="statFaturandoV" style="color:var(--amber)">0</b><span>Faturando</span></div>
+      <div class="stat"><b id="statCarregandoV" style="color:var(--teal)">0</b><span>Carregando</span></div>
+      <div class="stat"><b id="statDescarregandoV" style="color:var(--purple)">0</b><span>Descarregando</span></div>
+      <div class="stat"><b id="statLiberadoV" style="color:var(--green)">0</b><span>Liberados</span></div>
+    </div>
+    <div id="queueColumnsWrapper">
+      <div id="carregamentoSection">
+        <h3 class="sub-heading op-heading-carregamento" id="carregamentoSubHeading" style="display:none;">Carregamento</h3>
+        <div class="queue" id="queueBoxCarregamento"></div>
+      </div>
+      <div id="descargaSection" style="display:none;">
+        <h3 class="sub-heading op-heading-descarga" id="descargaSubHeading" style="display:none;">Descarga</h3>
+        <div class="queue" id="queueBoxDescarga"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="usersCard" style="display:none;">
+    <h2>Cadastro de usuários</h2>
+    <label for="userNameInput">Nome</label>
+    <input type="text" id="userNameInput" placeholder="Nome completo">
+    <label for="userPasswordInput">Senha</label>
+    <input type="text" id="userPasswordInput" placeholder="Senha de acesso">
+    <label for="userRoleSelect">Tipo de acesso</label>
+    <select id="userRoleSelect">
+      <option value="portaria">Portaria</option>
+      <option value="admin">Administrativo</option>
+      <option value="viewer">Monitoramento</option>
+    </select>
+    <button class="btn" id="registerUserBtn" style="margin-top:16px;">Cadastrar usuário</button>
+    <div id="usersList" style="margin-top:18px;"></div>
+  </div>
+
+  <div class="card" id="historyCard" style="display:none;">
+    <h2>Consulta de lançamentos</h2>
+    <label for="historyDateInput">Data</label>
+    <input type="date" id="historyDateInput">
+    <div id="historyResults" style="margin-top:16px;"></div>
+    <h3 class="sub-heading" style="margin-top:26px;">Log de alterações do dia</h3>
+    <div id="historyLog"></div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="releasedOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Caminhões liberados hoje</h2>
+      <button class="modal-close" id="closeReleased">&times;</button>
+    </div>
+    <input type="text" id="searchPlate" placeholder="Buscar por placa ou motorista..." style="margin-bottom:14px;">
+    <div id="releasedList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="canceledOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Caminhões cancelados</h2>
+      <button class="modal-close" id="closeCanceled">&times;</button>
+    </div>
+    <input type="text" id="searchCanceled" placeholder="Buscar por placa ou motorista..." style="margin-bottom:14px;">
+    <div id="canceledList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head">
+      <h2 style="margin:0;">Detalhes</h2>
+      <button class="modal-close" id="closeDetail">&times;</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <h2 style="margin:0;">Editar caminhão</h2>
+      <button class="modal-close" id="closeEdit">&times;</button>
+    </div>
+    <label for="editPlateInput">Placa</label>
+    <input type="text" id="editPlateInput" maxlength="8">
+    <label for="editDriverInput">Motorista</label>
+    <input type="text" id="editDriverInput">
+    <button class="btn" id="saveEditBtn" style="margin-top:16px;">Salvar alterações</button>
+    <button class="link-danger" id="cancelFromEditBtn" type="button">Cancelar este registro (desistência)</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <h2 style="margin:0;" id="confirmTitle">Confirmar</h2>
+      <button class="modal-close" id="closeConfirm">&times;</button>
+    </div>
+    <p id="confirmMessage" style="font-size:14px; color:var(--text); line-height:1.5;"></p>
+    <div id="confirmReasonGroup" style="display:none;">
+      <label for="confirmReasonInput">Motivo (opcional)</label>
+      <input type="text" id="confirmReasonInput" placeholder="Ex: motorista desistiu, problema mecânico...">
+    </div>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn secondary" id="confirmCancelBtn" style="margin-top:0;">Voltar</button>
+      <button class="btn" id="confirmOkBtn" style="margin-top:0;">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-toolbar no-print">
+    <h2>Relatório de acessos</h2>
+    <div class="actions">
+      <button class="btn secondary small" id="reportDownloadPdf">Baixar PDF</button>
+      <button class="btn small" id="reportPrint">Imprimir</button>
+      <button class="modal-close" id="reportClose">&times;</button>
+    </div>
+  </div>
+  <div class="report-page-wrap">
+    <div class="report-page" id="reportPage"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script>
+const STORAGE_KEY = 'yard-trucks';
+const COUNTER_KEY = 'yard-daily-counter';
+const USERS_KEY = 'yard-users';
+const AUDIT_KEY = 'yard-audit-log';
+const MASTER_PASSWORD = '2026'; // acesso mestre: entra em qualquer menu
+
+// Configuração do Firebase (banco de dados real, compartilhado entre qualquer dispositivo)
+const firebaseConfig = {
+  apiKey: "AIzaSyDpFnasNcPmcep88lHsbUO7Kyh4city4ZY",
+  authDomain: "patio-2754b.firebaseapp.com",
+  projectId: "patio-2754b",
+  storageBucket: "patio-2754b.firebasestorage.app",
+  messagingSenderId: "1024369153784",
+  appId: "1:1024369153784:web:b2f5c511e11472314dcd0d"
+};
+
+let firestoreDb = null;
+let firebaseReady = false;
+try{
+  if(typeof firebase !== 'undefined'){
+    firebase.initializeApp(firebaseConfig);
+    firestoreDb = firebase.firestore();
+    firebaseReady = true;
+  }
+}catch(e){
+  console.error('Não foi possível iniciar o Firebase, usando armazenamento local como alternativa:', e);
+}
+
+// Adaptador de armazenamento, em ordem de prioridade:
+// 1) Firestore (banco de dados real, sincroniza entre qualquer dispositivo/navegador)
+// 2) window.storage (quando aberto dentro do Claude e o Firestore não estiver disponível)
+// 3) localStorage do próprio aparelho (último recurso, só salva localmente)
+const hasClaudeStorage = typeof window.storage !== 'undefined';
+
+async function storageGet(key){
+  if(firebaseReady){
+    try{
+      const doc = await firestoreDb.collection('yardKV').doc(key).get();
+      if(doc.exists) return { key, value: doc.data().value };
+      return null;
+    }catch(e){ console.error('Falha ao ler do Firestore, tentando alternativa:', e); }
+  }
+  if(hasClaudeStorage){
+    try{ return await window.storage.get(key, true); }catch(e){ return null; }
+  }
+  try{
+    const raw = localStorage.getItem('patio_' + key);
+    return raw !== null ? { key, value: raw } : null;
+  }catch(e){ return null; }
+}
+
+async function storageSet(key, value){
+  if(firebaseReady){
+    try{
+      await firestoreDb.collection('yardKV').doc(key).set({
+        value,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { key, value };
+    }catch(e){ console.error('Falha ao salvar no Firestore, tentando alternativa:', e); }
+  }
+  if(hasClaudeStorage){
+    try{ return await window.storage.set(key, value, true); }catch(e){ return null; }
+  }
+  try{
+    localStorage.setItem('patio_' + key, value);
+    return { key, value };
+  }catch(e){ return null; }
+}
+
+let trucks = [];
+let users = [];
+let auditLog = [];
+let currentUser = null;
+let currentRole = 'geral';
+let currentScreen = 'gate';
+let selectedOperation = 'carregamento';
+let lastSyncTs = Date.now();
+
+let hasLoadedUsersOnce = false;
+
+async function loadUsers(){
+  const res = await storageGet(USERS_KEY);
+  if(res && res.value){
+    users = JSON.parse(res.value);
+    hasLoadedUsersOnce = true;
+  } else if(!hasLoadedUsersOnce){
+    users = [];
+    hasLoadedUsersOnce = true;
+  }
+  // se a leitura falhar/vier vazia depois de já termos carregado dados reais, mantém o que já está em memória
+}
+
+function persistUsers(){
+  storageSet(USERS_KEY, JSON.stringify(users)).catch(err=>console.error('Falha ao salvar usuários:', err));
+}
+
+let hasLoadedAuditOnce = false;
+
+async function loadAuditLog(){
+  const res = await storageGet(AUDIT_KEY);
+  if(res && res.value){
+    auditLog = JSON.parse(res.value);
+    hasLoadedAuditOnce = true;
+  } else if(!hasLoadedAuditOnce){
+    auditLog = [];
+    hasLoadedAuditOnce = true;
+  }
+}
+
+function persistAuditLog(){
+  storageSet(AUDIT_KEY, JSON.stringify(auditLog)).catch(err=>console.error('Falha ao salvar log:', err));
+}
+
+function logAction(t, action){
+  auditLog.push({
+    id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    ts: Date.now(),
+    day: todayStr(),
+    user: currentUser ? currentUser.name : '—',
+    action,
+    plate: t.plate,
+    driver: t.driver,
+    operation: opOf(t)
+  });
+  persistAuditLog();
+}
+
+function roleLabel(role){
+  return { portaria:'Portaria', admin:'Administrativo', viewer:'Monitoramento' }[role] || role;
+}
+
+let pendingRole = null;
+
+function showScreen(screen){
+  currentScreen = screen;
+  const isAdminUI = screen==='admin' || screen==='viewer';
+  document.getElementById('gateScreen').classList.toggle('open', screen==='gate');
+  document.getElementById('loginScreen').classList.toggle('open', screen==='login');
+  document.getElementById('portariaScreen').style.display = screen==='portaria' ? 'block' : 'none';
+  document.getElementById('adminScreen').style.display = isAdminUI ? 'block' : 'none';
+  document.getElementById('adminScreen').classList.toggle('viewer-mode', screen==='viewer');
+  document.getElementById('screenTitle').textContent = screen==='viewer' ? 'Painel de Monitoramento' : 'Painel Administrativo';
+  if(screen==='viewer'){
+    currentRole = 'geral';
+    document.querySelectorAll('#roleSwitch button').forEach(b=>b.classList.toggle('active', b.dataset.role==='geral'));
+  }
+  if(screen==='login'){
+    document.getElementById('loginTitle').textContent = 'Acesso — ' + roleLabel(pendingRole);
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+    setTimeout(()=>document.getElementById('loginPassword').focus(), 50);
+  }
+  const badgeText = currentUser ? currentUser.name : '';
+  const bp = document.getElementById('userBadgePortaria'); if(bp) bp.textContent = badgeText;
+  const ba = document.getElementById('userBadgeAdmin'); if(ba) ba.textContent = badgeText;
+}
+
+function attemptLogin(){
+  const val = document.getElementById('loginPassword').value.trim();
+  if(val === MASTER_PASSWORD){
+    currentUser = { id:'master', name:'Administrador', password: MASTER_PASSWORD, role: pendingRole };
+    showScreen(pendingRole);
+    render();
+    return;
+  }
+  const match = users.find(u => u.password === val && u.role === pendingRole);
+  if(!match){
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+  currentUser = match;
+  showScreen(match.role);
+  render();
+}
+
+function logout(){
+  currentUser = null;
+  pendingRole = null;
+  showScreen('gate');
+}
+
+function registerUser(){
+  const nameInput = document.getElementById('userNameInput');
+  const passInput = document.getElementById('userPasswordInput');
+  const roleSelect = document.getElementById('userRoleSelect');
+  const name = nameInput.value.trim();
+  const password = passInput.value.trim();
+  const role = roleSelect.value;
+  if(!name || !password) return;
+  if(password === MASTER_PASSWORD){
+    alert('Essa senha é reservada para o acesso mestre. Escolha outra senha para este usuário.');
+    return;
+  }
+  if(users.some(u => u.password === password)){
+    alert('Já existe um usuário com essa senha. Escolha uma senha diferente.');
+    return;
+  }
+  users.push({ id: 'u_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), name, password, role });
+  nameInput.value=''; passInput.value=''; roleSelect.value='portaria';
+  renderUsersList();
+  persistUsers();
+}
+
+function removeUser(id){
+  users = users.filter(u => u.id !== id);
+  renderUsersList();
+  persistUsers();
+}
+
+function renderHistory(){
+  const dateInput = document.getElementById('historyDateInput');
+  if(!dateInput.value) dateInput.value = todayStr();
+  const selectedDate = dateInput.value;
+
+  const dayTrucks = trucks.filter(t=>t.day===selectedDate).sort((a,b)=>a.queueNumber-b.queueNumber);
+  const resultsBox = document.getElementById('historyResults');
+  if(dayTrucks.length===0){
+    resultsBox.innerHTML = `<div class="empty-modal">Nenhum lançamento encontrado em ${fmtDateFull(selectedDate)}.</div>`;
+  } else {
+    resultsBox.innerHTML = dayTrucks.map(t => `
+      <div class="hist-item" onclick="openDetail('${t.id}')">
+        <div style="display:flex; align-items:center;">
+          <span class="num-badge">#${t.queueNumber}</span>
+          <div>
+            <div><span class="p">${t.plate}</span> — ${t.driver} <span class="pill op-${opOf(t)}" style="margin-left:6px;">${opLabel(opOf(t))}</span></div>
+            <div class="d">entrou às ${fmtTime(t.times.fila)}${t.productType ? ' · produto: ' + t.productType : ''}</div>
+          </div>
+        </div>
+        <span class="pill st-${t.status}">${statusLabel(t.status)}</span>
+      </div>
+    `).join('');
+  }
+
+  const dayLog = auditLog.filter(l=>l.day===selectedDate).sort((a,b)=>b.ts-a.ts);
+  const logBox = document.getElementById('historyLog');
+  if(dayLog.length===0){
+    logBox.innerHTML = `<div class="empty-modal">Nenhuma alteração registrada em ${fmtDateFull(selectedDate)}.</div>`;
+  } else {
+    logBox.innerHTML = dayLog.map(l => `
+      <div class="log-item">
+        <div>
+          <div class="l-action">${l.action}</div>
+          <div class="l-meta">${l.plate} — ${l.driver} · ${opLabel(l.operation)} · por ${l.user}</div>
+        </div>
+        <div class="l-meta">${fmtTime(l.ts)}</div>
+      </div>
+    `).join('');
+  }
+}
+
+
+function renderUsersList(){
+  const list = document.getElementById('usersList');
+  if(!list) return;
+  if(users.length===0){
+    list.innerHTML = `<div style="font-size:12px;color:var(--text-muted);">Nenhum usuário cadastrado ainda. A senha mestre (2026) dá acesso a qualquer menu enquanto você não cadastra a equipe.</div>`;
+    return;
+  }
+  list.innerHTML = users.map(u => `
+    <div class="user-item">
+      <div>
+        <div class="u-name">${u.name}</div>
+        <div class="u-role">${roleLabel(u.role)}</div>
+      </div>
+      <button class="u-remove" onclick="removeUser('${u.id}')" title="Remover usuário">&times;</button>
+    </div>
+  `).join('');
+}
+
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function elapsed(ts){
+  const s = Math.floor((Date.now()-ts)/1000);
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return h>0 ? `${h}h ${m}min` : `${m}min ${sec.toString().padStart(2,'0')}s`;
+}
+
+function formatDuration(totalMinutes){
+  if(totalMinutes < 60) return totalMinutes + ' min';
+  const h = Math.floor(totalMinutes/60);
+  const m = totalMinutes % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
+let lastLocalChangeTs = 0;
+let pendingTruckSave = false;
+
+let hasLoadedTrucksOnce = false;
+
+async function loadTrucks(){
+  if(pendingTruckSave) return; // nunca sobrescreve enquanto o salvamento não for confirmado
+  if(Date.now() - lastLocalChangeTs < 1500) return; // pequena folga extra após qualquer ação local
+  const res = await storageGet(STORAGE_KEY);
+  if(res && res.value){
+    trucks = JSON.parse(res.value);
+    hasLoadedTrucksOnce = true;
+  } else if(!hasLoadedTrucksOnce){
+    trucks = [];
+    hasLoadedTrucksOnce = true;
+  }
+  // se a leitura falhar ou vier vazia depois de já termos dados carregados, mantém os dados atuais em vez de apagar
+  lastSyncTs = Date.now();
+  updateAutocompleteLists();
+  render();
+}
+
+function toTitleCase(str){
+  return str.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+}
+
+function updateAutocompleteLists(){
+  const namesList = document.getElementById('driverNamesList');
+  const platesList = document.getElementById('platesList');
+  const productsList = document.getElementById('productTypesList');
+  if(!namesList || !platesList) return;
+  const names = [...new Set(trucks.map(t=>t.driver).filter(Boolean))].sort();
+  const plates = [...new Set(trucks.map(t=>t.plate).filter(Boolean))].sort();
+  const products = [...new Set(trucks.map(t=>t.productType).filter(Boolean))].sort();
+  namesList.innerHTML = names.map(n=>`<option value="${n}">`).join('');
+  platesList.innerHTML = plates.map(p=>`<option value="${p}">`).join('');
+  if(productsList) productsList.innerHTML = products.map(p=>`<option value="${p}">`).join('');
+}
+
+function persistTrucks(){
+  lastLocalChangeTs = Date.now();
+  updateAutocompleteLists();
+  pendingTruckSave = true;
+  saveTrucksAttempt(JSON.stringify(trucks), 4);
+}
+
+function saveTrucksAttempt(payload, attemptsLeft){
+  storageSet(STORAGE_KEY, payload)
+    .then(result=>{
+      if(result){
+        pendingTruckSave = false;
+        lastLocalChangeTs = Date.now();
+        lastSyncTs = Date.now();
+      } else if(attemptsLeft > 0){
+        setTimeout(()=>saveTrucksAttempt(payload, attemptsLeft-1), 900);
+      } else {
+        pendingTruckSave = false;
+        console.error('Não foi possível confirmar o salvamento dos caminhões após várias tentativas.');
+      }
+    })
+    .catch(err=>{
+      console.error('Falha ao salvar caminhões:', err);
+      if(attemptsLeft > 0){
+        setTimeout(()=>saveTrucksAttempt(payload, attemptsLeft-1), 900);
+      } else {
+        pendingTruckSave = false;
+      }
+    });
+}
+
+async function nextQueueNumber(operation){
+  const today = todayStr();
+
+  if(firebaseReady){
+    try{
+      const ref = firestoreDb.collection('yardKV').doc(COUNTER_KEY);
+      const result = await firestoreDb.runTransaction(async (tx)=>{
+        const snap = await tx.get(ref);
+        let counter = {date: today, counts: {carregamento:0, descarga:0}};
+        if(snap.exists && snap.data().value){
+          const parsed = JSON.parse(snap.data().value);
+          if(parsed.date === today){
+            counter = parsed;
+            if(!counter.counts) counter.counts = {carregamento: counter.count || 0, descarga:0};
+          }
+        }
+        counter.counts[operation] = (counter.counts[operation] || 0) + 1;
+        tx.set(ref, { value: JSON.stringify(counter) });
+        return counter.counts[operation];
+      });
+      return result;
+    }catch(e){
+      console.error('Falha na transação de numeração da fila, usando alternativa:', e);
+    }
+  }
+
+  let counter = {date: today, counts: {carregamento:0, descarga:0}};
+  try{
+    const res = await storageGet(COUNTER_KEY);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      if(parsed.date === today){
+        counter = parsed;
+        if(!counter.counts) counter.counts = {carregamento: counter.count || 0, descarga:0};
+      }
+    }
+  }catch(e){}
+  counter.counts[operation] = (counter.counts[operation] || 0) + 1;
+  await storageSet(COUNTER_KEY, JSON.stringify(counter));
+  return counter.counts[operation];
+}
+
+async function registerTruck(){
+  const plateInput = document.getElementById('plateInput');
+  const driverInput = document.getElementById('driverInput');
+  const productTypeInput = document.getElementById('productTypeInput');
+  const plate = plateInput.value.trim().toUpperCase();
+  const driver = toTitleCase(driverInput.value.trim());
+  const operation = selectedOperation;
+  const productType = toTitleCase(productTypeInput.value.trim());
+  if(!plate || !driver){ return; }
+  if(operation==='descarga' && !productType){ productTypeInput.focus(); return; }
+  const num = await nextQueueNumber(operation);
+  const now = Date.now();
+  const newTruck = {
+    id: 'tr_' + now + '_' + Math.random().toString(36).slice(2,7),
+    queueNumber: num,
+    operation,
+    plate, driver,
+    productType: operation==='descarga' ? productType : undefined,
+    status: 'fila',
+    day: todayStr(),
+    times: { fila: now }
+  };
+  trucks.push(newTruck);
+  plateInput.value=''; driverInput.value=''; productTypeInput.value='';
+  render();
+  persistTrucks();
+  logAction(newTruck, `Entrada registrada no pátio (${opLabel(operation)}, fila #${num})`);
+}
+
+let pendingConfirmAction = null;
+
+function askConfirm(title, message, onConfirm, opts={}){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmReasonGroup').style.display = opts.withReason ? 'block' : 'none';
+  document.getElementById('confirmReasonInput').value = '';
+  pendingConfirmAction = onConfirm;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function advanceStatus(id, newStatus){
+  const t = trucks.find(x=>x.id===id);
+  if(!t) return;
+  askConfirm(
+    'Confirmar mudança de status',
+    `Alterar o status do caminhão ${t.plate} (${t.driver}) para "${statusLabel(newStatus)}"?`,
+    ()=>{
+      const oldStatus = t.status;
+      t.status = newStatus;
+      t.times[newStatus] = Date.now();
+      render();
+      persistTrucks();
+      logAction(t, `Status alterado de "${statusLabel(oldStatus)}" para "${statusLabel(newStatus)}"`);
+    }
+  );
+}
+
+function opLabel(op){
+  return op === 'descarga' ? 'Descarga' : 'Carregamento';
+}
+
+function statusLabel(s){
+  return {fila:'Aguardando', faturando:'Faturando', carregando:'Carregando', descarregando:'Descarregando', liberado:'Liberado', cancelado:'Cancelado'}[s];
+}
+
+function cancelTruck(id){
+  const t = trucks.find(x=>x.id===id);
+  if(!t) return;
+  askConfirm(
+    'Cancelar registro',
+    `Confirma o CANCELAMENTO do caminhão ${t.plate} (${t.driver})? Use isso quando o motorista desistir do ${opLabel(opOf(t)).toLowerCase()}.`,
+    (reason)=>{
+      const oldStatus = t.status;
+      t.status = 'cancelado';
+      t.times.cancelado = Date.now();
+      if(reason && reason.trim()) t.cancelReason = toTitleCase(reason.trim());
+      document.getElementById('editOverlay').classList.remove('open');
+      render();
+      persistTrucks();
+      logAction(t, `Cancelado (estava em "${statusLabel(oldStatus)}")${t.cancelReason ? ' — motivo: ' + t.cancelReason : ''}`);
+    },
+    { withReason:true }
+  );
+}
+
+function opOf(t){ return t.operation || 'carregamento'; }
+
+function releasedDay(t){
+  return t.times.liberado ? new Date(t.times.liberado).toISOString().slice(0,10) : null;
+}
+
+function cancelDay(t){
+  return t.times.cancelado ? new Date(t.times.cancelado).toISOString().slice(0,10) : null;
+}
+
+function isOvernight(t){
+  return t.status !== 'liberado' && t.status !== 'cancelado' && t.day !== todayStr();
+}
+
+function actionsFor(t){
+  const btns = [];
+  const op = opOf(t);
+
+  if(op === 'carregamento'){
+    if(currentRole === 'faturamento' && t.status==='fila')
+      btns.push(`<button class="btn small" onclick="advanceStatus('${t.id}','faturando')">Iniciar faturamento</button>`);
+    if(currentRole === 'faturamento' && t.status==='faturando')
+      btns.push(`<button class="btn small secondary" onclick="advanceStatus('${t.id}','carregando')">Enviar p/ carregamento</button>`);
+    if(currentRole === 'expedicao' && t.status==='carregando')
+      btns.push(`<button class="btn small" onclick="advanceStatus('${t.id}','liberado')">Liberar saída</button>`);
+    if(currentRole === 'expedicao' && t.status==='fila')
+      btns.push(`<span style="font-size:11px; color:var(--text-muted);">Aguardando faturamento</span>`);
+  } else {
+    if(currentRole === 'descarga' && t.status==='fila')
+      btns.push(`<button class="btn small" onclick="advanceStatus('${t.id}','descarregando')">Iniciar descarga</button>`);
+    if(currentRole === 'descarga' && t.status==='descarregando')
+      btns.push(`<button class="btn small" onclick="advanceStatus('${t.id}','liberado')">Liberar saída</button>`);
+  }
+
+  if(currentRole === 'geral')
+    btns.push(`<span style="font-size:11px; color:var(--text-muted);">${statusLabel(t.status)}</span>`);
+  if(currentScreen === 'admin')
+    btns.push(`<button class="btn small secondary" onclick="openEdit('${t.id}')">Editar</button>`);
+  return btns.join('');
+}
+
+function render(){
+  const today = todayStr();
+  const active = trucks.filter(t=>t.status!=='liberado' && t.status!=='cancelado').sort((a,b)=>a.times.fila-b.times.fila);
+  const released = trucks.filter(t=>t.status==='liberado' && releasedDay(t)===today).sort((a,b)=>b.times.liberado-a.times.liberado);
+  const dateStr = new Date().toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'long'});
+  const syncStr = pendingTruckSave ? 'salvando…' : ('atualizado há ' + Math.max(0,Math.floor((Date.now()-lastSyncTs)/1000)) + 's');
+
+  if(currentScreen==='portaria'){
+    document.getElementById('dateLabelPortaria').textContent = dateStr;
+    document.getElementById('syncLabelPortaria').textContent = syncStr;
+
+    function paintPortariaQueue(containerId, list){
+      const pbox = document.getElementById(containerId);
+      if(list.length===0){
+        pbox.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum caminhão no momento</div>`;
+        return;
+      }
+      pbox.innerHTML = list.map(t => {
+        const canRelease = (opOf(t)==='carregamento' && t.status==='carregando') || (opOf(t)==='descarga' && t.status==='descarregando');
+        return `
+        <div class="truck st-${t.status} op-${opOf(t)}">
+          <div class="num">${t.queueNumber}<small>${opOf(t)==='descarga' ? 'descarga' : 'fila'}</small></div>
+          <div class="info">
+            <div class="plate">${t.plate}</div>
+            <div class="driver">${t.driver}</div>
+            ${t.productType ? `<div class="product-tag">📦 ${t.productType}</div>` : ''}
+            ${isOvernight(t) ? `<div class="overnight-tag">⚠️ Desde ${fmtDateFull(t.day)} — virou o dia</div>` : ''}
+            <div class="meta">
+              <span class="pill st-${t.status}">${statusLabel(t.status)}</span>
+              <span>entrou às ${fmtTime(t.times.fila)}</span>
+            </div>
+          </div>
+          <div class="actions">
+            ${canRelease ? `<button class="btn small" onclick="advanceStatus('${t.id}','liberado')">Liberar saída</button>` : `<span style="font-size:11px; color:var(--text-muted);">Aguardando etapas anteriores</span>`}
+            <button class="link-danger" style="margin-top:0; width:auto; text-align:right;" onclick="cancelTruck('${t.id}')">cancelar registro</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    paintPortariaQueue('queueBoxPortariaCarregamento', active.filter(t=>opOf(t)==='carregamento'));
+    paintPortariaQueue('queueBoxPortariaDescarga', active.filter(t=>opOf(t)==='descarga'));
+    return;
+  }
+
+  if(currentScreen!=='admin' && currentScreen!=='viewer') return;
+
+  const showingUsers = currentScreen==='admin' && currentRole==='usuarios';
+  const showingHistory = currentScreen==='admin' && currentRole==='historico';
+  document.getElementById('usersCard').style.display = showingUsers ? 'block' : 'none';
+  document.getElementById('historyCard').style.display = showingHistory ? 'block' : 'none';
+  document.getElementById('queueCard').style.display = (showingUsers || showingHistory) ? 'none' : 'block';
+  if(showingUsers) renderUsersList();
+  if(showingHistory) renderHistory();
+
+  document.getElementById('dateLabel').textContent = dateStr;
+  document.getElementById('syncLabel').textContent = syncStr;
+
+  document.getElementById('statFila').textContent = trucks.filter(t=>t.status==='fila').length;
+  document.getElementById('statAndamento').textContent = trucks.filter(t=>['faturando','carregando','descarregando'].includes(t.status)).length;
+  document.getElementById('statLiberado').textContent = released.length;
+  document.getElementById('statCancelado').textContent = trucks.filter(t=>t.status==='cancelado' && cancelDay(t)===today).length;
+
+  if(currentScreen==='viewer'){
+    document.getElementById('statFilaV').textContent = trucks.filter(t=>t.status==='fila').length;
+    document.getElementById('statFaturandoV').textContent = trucks.filter(t=>t.status==='faturando').length;
+    document.getElementById('statCarregandoV').textContent = trucks.filter(t=>t.status==='carregando').length;
+    document.getElementById('statDescarregandoV').textContent = trucks.filter(t=>t.status==='descarregando').length;
+    document.getElementById('statLiberadoV').textContent = released.length;
+  }
+
+  const isViewer = currentScreen==='viewer';
+  const isDescargaTab = currentScreen==='admin' && currentRole==='descarga';
+  const isCarregamentoTabs = currentScreen==='admin' && ['geral','faturamento','expedicao'].includes(currentRole);
+
+  document.getElementById('carregamentoSection').style.display = (isViewer || isCarregamentoTabs) ? 'block' : 'none';
+  document.getElementById('descargaSection').style.display = (isViewer || isDescargaTab) ? 'block' : 'none';
+  document.getElementById('carregamentoSubHeading').style.display = isViewer ? 'block' : 'none';
+  document.getElementById('descargaSubHeading').style.display = isViewer ? 'block' : 'none';
+  document.getElementById('queueCardTitle').textContent = isDescargaTab ? 'Fila de descarga' : (isViewer ? 'Fila do pátio' : 'Fila de carregamento');
+  document.getElementById('queueColumnsWrapper').classList.toggle('split', isViewer);
+
+  const baseList = isViewer
+    ? [...active, ...released].sort((a,b)=>a.times.fila-b.times.fila)
+    : active;
+
+  const carregamentoList = baseList.filter(t=>opOf(t)==='carregamento');
+  const descargaList = baseList.filter(t=>opOf(t)==='descarga');
+
+  function paintQueue(containerId, list){
+    const box = document.getElementById(containerId);
+    if(list.length===0){
+      box.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum caminhão no momento</div>`;
+      return;
+    }
+    box.innerHTML = list.map(t => `
+      <div class="truck st-${t.status} op-${opOf(t)}">
+        <div class="num">${t.queueNumber}<small>${opOf(t)==='descarga' ? 'descarga' : 'fila'}</small></div>
+        <div class="info">
+          <div class="plate">${t.plate}</div>
+          <div class="driver">${t.driver}</div>
+          ${t.productType ? `<div class="product-tag">📦 ${t.productType}</div>` : ''}
+          ${isOvernight(t) ? `<div class="overnight-tag">⚠️ Desde ${fmtDateFull(t.day)} — virou o dia</div>` : ''}
+          <div class="meta">
+            <span class="pill op-${opOf(t)}">${opLabel(opOf(t))}</span>
+            <span class="pill st-${t.status}">${statusLabel(t.status)}</span>
+            <span>entrou às ${fmtTime(t.times.fila)}</span>
+            <span>${t.status==='liberado' ? 'saiu às ' + fmtTime(t.times.liberado) : 'há ' + elapsed(t.times[t.status])}</span>
+          </div>
+        </div>
+        <div class="actions">${actionsFor(t)}</div>
+      </div>
+    `).join('');
+  }
+
+  if(isViewer || isCarregamentoTabs) paintQueue('queueBoxCarregamento', carregamentoList);
+  if(isViewer || isDescargaTab) paintQueue('queueBoxDescarga', descargaList);
+
+  renderReleasedList();
+  renderCanceledList();
+}
+
+function renderReleasedList(){
+  const overlay = document.getElementById('releasedOverlay');
+  if(!overlay.classList.contains('open')) return;
+  const today = todayStr();
+  const query = document.getElementById('searchPlate').value.trim().toUpperCase();
+  let released = trucks.filter(t=>t.status==='liberado' && releasedDay(t)===today);
+  if(query) released = released.filter(t => t.plate.includes(query) || t.driver.toUpperCase().includes(query));
+  released.sort((a,b)=>b.times.liberado-a.times.liberado);
+
+  const list = document.getElementById('releasedList');
+  if(released.length===0){
+    list.innerHTML = `<div class="empty-modal">Nenhum caminhão liberado encontrado.</div>`;
+    return;
+  }
+  list.innerHTML = released.map(t=>`
+    <div class="hist-item" onclick="openDetail('${t.id}')">
+      <div style="display:flex; align-items:center;">
+        <span class="num-badge">#${t.queueNumber}</span>
+        <div>
+          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="pill op-${opOf(t)}" style="margin-left:6px;">${opLabel(opOf(t))}</span></div>
+          <div class="d">saiu às ${fmtTime(t.times.liberado)} · permaneceu ${formatDuration(Math.round((t.times.liberado - t.times.fila)/60000))}</div>
+        </div>
+      </div>
+      <span class="pill st-liberado">Liberado</span>
+    </div>
+  `).join('');
+}
+
+function renderCanceledList(){
+  const overlay = document.getElementById('canceledOverlay');
+  if(!overlay.classList.contains('open')) return;
+  const today = todayStr();
+  const query = document.getElementById('searchCanceled').value.trim().toUpperCase();
+  let canceled = trucks.filter(t=>t.status==='cancelado' && cancelDay(t)===today);
+  if(query) canceled = canceled.filter(t => t.plate.includes(query) || t.driver.toUpperCase().includes(query));
+  canceled.sort((a,b)=>b.times.cancelado-a.times.cancelado);
+
+  const list = document.getElementById('canceledList');
+  if(canceled.length===0){
+    list.innerHTML = `<div class="empty-modal">Nenhum caminhão cancelado encontrado.</div>`;
+    return;
+  }
+  list.innerHTML = canceled.map(t=>`
+    <div class="hist-item" onclick="openDetail('${t.id}')">
+      <div style="display:flex; align-items:center;">
+        <span class="num-badge">#${t.queueNumber}</span>
+        <div>
+          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="pill op-${opOf(t)}" style="margin-left:6px;">${opLabel(opOf(t))}</span></div>
+          <div class="d">cancelado às ${fmtTime(t.times.cancelado)}${t.cancelReason ? ' · motivo: ' + t.cancelReason : ''}</div>
+        </div>
+      </div>
+      <span class="pill st-cancelado">Cancelado</span>
+    </div>
+  `).join('');
+}
+
+
+function openDetail(id){
+  const t = trucks.find(x=>x.id===id);
+  if(!t) return;
+  const stages = opOf(t)==='descarga' ? [
+    ['Entrada no pátio', t.times.fila],
+    ['Início da descarga', t.times.descarregando],
+    ['Liberação de saída', t.times.liberado],
+    ['Cancelado', t.times.cancelado],
+  ] : [
+    ['Entrada no pátio', t.times.fila],
+    ['Início do faturamento', t.times.faturando],
+    ['Envio para carregamento', t.times.carregando],
+    ['Liberação de saída', t.times.liberado],
+    ['Cancelado', t.times.cancelado],
+  ];
+  const rows = stages.map(([label, ts]) => ts ? `<div class="detail-row"><span>${label}</span><span class="mono">${fmtTime(ts)}</span></div>` : '').join('');
+  const endTs = t.times.liberado || t.times.cancelado;
+  const totalMin = endTs ? Math.round((endTs - t.times.fila)/60000) : null;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><span>Tipo</span><span>${opLabel(opOf(t))}</span></div>
+    ${t.productType ? `<div class="detail-row"><span>Produto</span><span>${t.productType}</span></div>` : ''}
+    <div class="detail-row"><span>Número na fila</span><span class="mono">#${t.queueNumber}</span></div>
+    <div class="detail-row"><span>Placa</span><span class="mono">${t.plate}</span></div>
+    <div class="detail-row"><span>Motorista</span><span>${t.driver}</span></div>
+    ${rows}
+    ${t.cancelReason ? `<div class="detail-row"><span>Motivo do cancelamento</span><span>${t.cancelReason}</span></div>` : ''}
+    ${totalMin!==null ? `<div class="detail-row"><span>Tempo total no pátio</span><span class="mono">${formatDuration(totalMin)}</span></div>` : ''}
+  `;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function filterPlateValue(str){
+  return str.toUpperCase().replace(/[^A-Z0-9]/g,'');
+}
+
+let editingId = null;
+
+function openEdit(id){
+  const t = trucks.find(x=>x.id===id);
+  if(!t) return;
+  editingId = id;
+  document.getElementById('editPlateInput').value = t.plate;
+  document.getElementById('editDriverInput').value = t.driver;
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function saveEdit(){
+  const t = trucks.find(x=>x.id===editingId);
+  if(!t) return;
+  const plate = filterPlateValue(document.getElementById('editPlateInput').value.trim());
+  const driver = toTitleCase(document.getElementById('editDriverInput').value.trim());
+  if(!plate || !driver) return;
+  const oldPlate = t.plate, oldDriver = t.driver;
+  t.plate = plate;
+  t.driver = driver;
+  document.getElementById('editOverlay').classList.remove('open');
+  render();
+  persistTrucks();
+  if(oldPlate !== plate || oldDriver !== driver){
+    logAction(t, `Registro editado — placa: "${oldPlate}" → "${plate}" · motorista: "${oldDriver}" → "${driver}"`);
+  }
+}
+
+function fmtDateFull(dayStr){
+  const [y,m,d] = dayStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function buildReportRows(){
+  const sorted = trucks.slice().sort((a,b)=>{
+    if(a.day !== b.day) return b.day.localeCompare(a.day);
+    return a.queueNumber - b.queueNumber;
+  });
+  return sorted;
+}
+
+function buildRowsTable(list, kind){
+  let rowsHtml = '';
+  let lastDay = null;
+  const colspan = kind==='descarga' ? 8 : 8;
+  list.forEach(t=>{
+    if(t.day !== lastDay){
+      rowsHtml += `<tr class="r-day-sep"><td colspan="${colspan}">${fmtDateFull(t.day)}</td></tr>`;
+      lastDay = t.day;
+    }
+    const dur = t.times.liberado ? formatDuration(Math.round((t.times.liberado - t.times.fila)/60000)) : '—';
+    if(kind==='descarga'){
+      rowsHtml += `
+        <tr>
+          <td>#${t.queueNumber}</td>
+          <td>${t.plate}</td>
+          <td>${t.driver}</td>
+          <td>${t.productType || '—'}</td>
+          <td>${statusLabel(t.status)}</td>
+          <td>${fmtTime(t.times.fila)}</td>
+          <td>${t.times.descarregando ? fmtTime(t.times.descarregando) : '—'}</td>
+          <td>${t.times.liberado ? fmtTime(t.times.liberado) : '—'}</td>
+          <td>${dur}</td>
+        </tr>`;
+    } else {
+      rowsHtml += `
+        <tr>
+          <td>#${t.queueNumber}</td>
+          <td>${t.plate}</td>
+          <td>${t.driver}</td>
+          <td>${statusLabel(t.status)}</td>
+          <td>${fmtTime(t.times.fila)}</td>
+          <td>${t.times.faturando ? fmtTime(t.times.faturando) : '—'}</td>
+          <td>${t.times.carregando ? fmtTime(t.times.carregando) : '—'}</td>
+          <td>${t.times.liberado ? fmtTime(t.times.liberado) : '—'}</td>
+          <td>${dur}</td>
+        </tr>`;
+    }
+  });
+  return rowsHtml;
+}
+
+function generateReport(){
+  const sorted = buildReportRows();
+  const carregamentoRows = sorted.filter(t=>opOf(t)==='carregamento');
+  const descargaRows = sorted.filter(t=>opOf(t)==='descarga');
+
+  const carregamentoHtml = buildRowsTable(carregamentoRows, 'carregamento');
+  const descargaHtml = buildRowsTable(descargaRows, 'descarga');
+
+  const generatedAt = new Date().toLocaleString('pt-BR');
+  const totalLiberados = trucks.filter(t=>t.status==='liberado').length;
+
+  document.getElementById('reportPage').innerHTML = `
+    <h1>Relatório de acessos — Pátio</h1>
+    <div class="r-meta">Gerado em ${generatedAt}</div>
+    <div class="r-summary">Total de registros: ${trucks.length} · Liberados: ${totalLiberados} · Em andamento: ${trucks.length - totalLiberados}</div>
+
+    <h2 class="r-section-title r-section-carregamento">Carregamento</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fila</th><th>Placa</th><th>Motorista</th><th>Status</th>
+          <th>Entrada</th><th>Faturamento</th><th>Carregamento</th><th>Liberação</th><th>Tempo total</th>
+        </tr>
+      </thead>
+      <tbody>${carregamentoHtml || '<tr><td colspan="9">Nenhum registro encontrado.</td></tr>'}</tbody>
+    </table>
+
+    <h2 class="r-section-title r-section-descarga">Descarga</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fila</th><th>Placa</th><th>Motorista</th><th>Produto</th><th>Status</th>
+          <th>Entrada</th><th>Descarga</th><th>Liberação</th><th>Tempo total</th>
+        </tr>
+      </thead>
+      <tbody>${descargaHtml || '<tr><td colspan="8">Nenhum registro encontrado.</td></tr>'}</tbody>
+    </table>
+  `;
+
+  document.getElementById('reportOverlay').classList.add('open');
+}
+
+function downloadReportPdf(){
+  if(!window.jspdf){
+    alert('Não foi possível carregar o gerador de PDF agora. Você ainda pode usar o botão "Imprimir" e escolher "Salvar como PDF" na janela de impressão.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt' });
+  const sorted = buildReportRows();
+  const carregamentoRows = sorted.filter(t=>opOf(t)==='carregamento');
+  const descargaRows = sorted.filter(t=>opOf(t)==='descarga');
+
+  doc.setFontSize(14);
+  doc.text('Relatório de acessos — Pátio', 30, 30);
+  doc.setFontSize(9);
+  doc.setTextColor(90);
+  doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), 30, 46);
+
+  doc.setFontSize(11);
+  doc.setTextColor(29,91,166);
+  doc.text('Carregamento', 30, 66);
+
+  const carregamentoBody = carregamentoRows.map(t => [
+    fmtDateFull(t.day),
+    '#' + t.queueNumber,
+    t.plate,
+    t.driver,
+    statusLabel(t.status),
+    fmtTime(t.times.fila),
+    t.times.faturando ? fmtTime(t.times.faturando) : '—',
+    t.times.carregando ? fmtTime(t.times.carregando) : '—',
+    t.times.liberado ? fmtTime(t.times.liberado) : '—',
+    t.times.liberado ? formatDuration(Math.round((t.times.liberado - t.times.fila)/60000)) : '—'
+  ]);
+
+  doc.autoTable({
+    startY: 74,
+    head: [['Data','Fila','Placa','Motorista','Status','Entrada','Faturamento','Carregamento','Liberação','Tempo total']],
+    body: carregamentoBody.length ? carregamentoBody : [['—','—','—','—','—','—','—','—','—','—']],
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: { fillColor: [29,91,166] },
+  });
+
+  let nextY = doc.lastAutoTable.finalY + 26;
+  doc.setFontSize(11);
+  doc.setTextColor(109,63,201);
+  doc.text('Descarga', 30, nextY);
+
+  const descargaBody = descargaRows.map(t => [
+    fmtDateFull(t.day),
+    '#' + t.queueNumber,
+    t.plate,
+    t.driver,
+    t.productType || '—',
+    statusLabel(t.status),
+    fmtTime(t.times.fila),
+    t.times.descarregando ? fmtTime(t.times.descarregando) : '—',
+    t.times.liberado ? fmtTime(t.times.liberado) : '—',
+    t.times.liberado ? formatDuration(Math.round((t.times.liberado - t.times.fila)/60000)) : '—'
+  ]);
+
+  doc.autoTable({
+    startY: nextY + 8,
+    head: [['Data','Fila','Placa','Motorista','Produto','Status','Entrada','Descarga','Liberação','Tempo total']],
+    body: descargaBody.length ? descargaBody : [['—','—','—','—','—','—','—','—','—','—']],
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: { fillColor: [109,63,201] },
+  });
+
+  doc.save('relatorio-acessos-patio.pdf');
+}
+
+document.getElementById('registerBtn').addEventListener('click', registerTruck);
+document.getElementById('operationToggle').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  selectedOperation = btn.dataset.op;
+  document.querySelectorAll('#operationToggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('productTypeGroup').style.display = selectedOperation==='descarga' ? 'block' : 'none';
+});
+document.getElementById('plateInput').addEventListener('input', e=>{
+  const pos = e.target.selectionStart;
+  const before = e.target.value.length;
+  e.target.value = filterPlateValue(e.target.value);
+  const diff = before - e.target.value.length;
+  e.target.setSelectionRange(pos-diff, pos-diff);
+});
+document.getElementById('plateInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('driverInput').focus(); });
+document.getElementById('driverInput').addEventListener('input', e=>{
+  const pos = e.target.selectionStart;
+  e.target.value = toTitleCase(e.target.value);
+  e.target.setSelectionRange(pos, pos);
+});
+document.getElementById('productTypeInput').addEventListener('input', e=>{
+  const pos = e.target.selectionStart;
+  e.target.value = toTitleCase(e.target.value);
+  e.target.setSelectionRange(pos, pos);
+});
+document.getElementById('driverInput').addEventListener('keydown', e=>{ if(e.key==='Enter') registerTruck(); });
+
+document.getElementById('roleSwitch').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  currentRole = btn.dataset.role;
+  document.querySelectorAll('#roleSwitch button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+
+document.getElementById('toggleHist').addEventListener('click', ()=>{
+  document.getElementById('searchPlate').value = '';
+  document.getElementById('releasedOverlay').classList.add('open');
+  renderReleasedList();
+});
+document.getElementById('toggleCanceled').addEventListener('click', ()=>{
+  document.getElementById('searchCanceled').value = '';
+  document.getElementById('canceledOverlay').classList.add('open');
+  renderCanceledList();
+});
+document.getElementById('closeCanceled').addEventListener('click', ()=>{
+  document.getElementById('canceledOverlay').classList.remove('open');
+});
+document.getElementById('canceledOverlay').addEventListener('click', e=>{
+  if(e.target.id==='canceledOverlay') e.target.classList.remove('open');
+});
+document.getElementById('searchCanceled').addEventListener('input', renderCanceledList);
+document.getElementById('generateReport').addEventListener('click', generateReport);
+document.getElementById('reportClose').addEventListener('click', ()=>{
+  document.getElementById('reportOverlay').classList.remove('open');
+});
+document.getElementById('reportDownloadPdf').addEventListener('click', downloadReportPdf);
+document.getElementById('reportPrint').addEventListener('click', ()=> window.print());
+document.getElementById('closeReleased').addEventListener('click', ()=>{
+  document.getElementById('releasedOverlay').classList.remove('open');
+});
+document.getElementById('closeDetail').addEventListener('click', ()=>{
+  document.getElementById('detailOverlay').classList.remove('open');
+});
+document.getElementById('releasedOverlay').addEventListener('click', e=>{
+  if(e.target.id==='releasedOverlay') e.target.classList.remove('open');
+});
+document.getElementById('detailOverlay').addEventListener('click', e=>{
+  if(e.target.id==='detailOverlay') e.target.classList.remove('open');
+});
+document.getElementById('closeEdit').addEventListener('click', ()=>{
+  document.getElementById('editOverlay').classList.remove('open');
+});
+document.getElementById('editOverlay').addEventListener('click', e=>{
+  if(e.target.id==='editOverlay') e.target.classList.remove('open');
+});
+document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+document.getElementById('cancelFromEditBtn').addEventListener('click', ()=>{
+  if(editingId) cancelTruck(editingId);
+});
+document.getElementById('closeConfirm').addEventListener('click', ()=>{
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmAction = null;
+});
+document.getElementById('confirmCancelBtn').addEventListener('click', ()=>{
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmAction = null;
+});
+document.getElementById('confirmOkBtn').addEventListener('click', ()=>{
+  const reason = document.getElementById('confirmReasonInput').value;
+  const action = pendingConfirmAction;
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmAction = null;
+  if(action) action(reason);
+});
+document.getElementById('confirmOverlay').addEventListener('click', e=>{
+  if(e.target.id==='confirmOverlay'){
+    e.target.classList.remove('open');
+    pendingConfirmAction = null;
+  }
+});
+document.getElementById('editPlateInput').addEventListener('input', e=>{
+  const pos = e.target.selectionStart;
+  const before = e.target.value.length;
+  e.target.value = filterPlateValue(e.target.value);
+  const diff = before - e.target.value.length;
+  e.target.setSelectionRange(pos-diff, pos-diff);
+});
+document.getElementById('editDriverInput').addEventListener('input', e=>{
+  const pos = e.target.selectionStart;
+  e.target.value = toTitleCase(e.target.value);
+  e.target.setSelectionRange(pos, pos);
+});
+document.getElementById('searchPlate').addEventListener('input', renderReleasedList);
+
+document.querySelectorAll('.gate-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    pendingRole = btn.dataset.role;
+    showScreen('login');
+  });
+});
+document.getElementById('loginBack').addEventListener('click', ()=>{ pendingRole = null; showScreen('gate'); });
+document.getElementById('loginSubmit').addEventListener('click', attemptLogin);
+document.getElementById('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
+document.getElementById('portariaLogout').addEventListener('click', logout);
+document.getElementById('adminLogout').addEventListener('click', logout);
+
+document.getElementById('registerUserBtn').addEventListener('click', registerUser);
+document.getElementById('historyDateInput').addEventListener('change', renderHistory);
+document.getElementById('userPasswordInput').addEventListener('keydown', e=>{ if(e.key==='Enter') registerUser(); });
+
+function setupRealtimeSync(){
+  if(!firebaseReady) return false;
+
+  firestoreDb.collection('yardKV').doc(STORAGE_KEY).onSnapshot(doc=>{
+    if(pendingTruckSave) return; // não sobrescreve enquanto um salvamento local está em andamento
+    if(doc.exists && doc.data().value){
+      trucks = JSON.parse(doc.data().value);
+      hasLoadedTrucksOnce = true;
+      lastSyncTs = Date.now();
+      updateAutocompleteLists();
+      render();
+    } else if(!hasLoadedTrucksOnce){
+      trucks = [];
+      hasLoadedTrucksOnce = true;
+      render();
+    }
+  }, err=>console.error('Falha na sincronização em tempo real dos caminhões:', err));
+
+  firestoreDb.collection('yardKV').doc(USERS_KEY).onSnapshot(doc=>{
+    if(doc.exists && doc.data().value){
+      users = JSON.parse(doc.data().value);
+      hasLoadedUsersOnce = true;
+      renderUsersList();
+    } else if(!hasLoadedUsersOnce){
+      users = [];
+      hasLoadedUsersOnce = true;
+    }
+  }, err=>console.error('Falha na sincronização em tempo real dos usuários:', err));
+
+  firestoreDb.collection('yardKV').doc(AUDIT_KEY).onSnapshot(doc=>{
+    if(doc.exists && doc.data().value){
+      auditLog = JSON.parse(doc.data().value);
+      hasLoadedAuditOnce = true;
+      if(currentScreen==='admin' && currentRole==='historico') renderHistory();
+    } else if(!hasLoadedAuditOnce){
+      auditLog = [];
+      hasLoadedAuditOnce = true;
+    }
+  }, err=>console.error('Falha na sincronização em tempo real do log:', err));
+
+  return true;
+}
+
+async function init(){
+  showScreen('gate');
+  const statusEl = document.getElementById('dbStatus');
+  if(firebaseReady){
+    statusEl.innerHTML = '<span class="dot"></span><span style="color:var(--green);">Conectado ao banco de dados</span>';
+  } else {
+    statusEl.innerHTML = '<span style="color:var(--amber);">⚠️ Sem banco de dados — salvando só neste navegador</span>';
+  }
+  await loadUsers();
+  await loadTrucks();
+  await loadAuditLog();
+  setupRealtimeSync();
+}
+init();
+
+// Pooling continua ativo como reforço/alternativa; quando o Firestore está ativo,
+// os listeners em tempo real acima já mantêm tudo atualizado instantaneamente.
+setInterval(loadTrucks, 4000);
+setInterval(loadUsers, 8000);
+setInterval(loadAuditLog, 8000);
+setInterval(render, 1000);
+</script>
+
+</body>
+</html>
