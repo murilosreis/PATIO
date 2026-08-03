@@ -81,6 +81,17 @@
   main.main-portaria{ grid-template-columns:360px 1fr; }
   @media (max-width:880px){ main{grid-template-columns:1fr;} main.main-portaria{grid-template-columns:1fr;} }
 
+  /* Coluna da esquerda fixa ao rolar — só em telas de desktop (largura maior que o ponto de quebra mobile) */
+  @media (min-width:881px){
+    main.main-portaria > .card:first-child,
+    #adminExtras{
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+  }
+
   .card{
     background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px;
     box-shadow:0 1px 3px rgba(0,0,0,0.2);
@@ -157,7 +168,7 @@
   .num small{display:block; font-size:9px; color:var(--text-muted); font-weight:500; letter-spacing:0.5px; font-family:'Inter',sans-serif; text-transform:uppercase;}
 
   .info .plate{font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:700; letter-spacing:1.5px;}
-  .info .driver{font-size:13px; color:var(--text-muted); margin-top:2px;}
+  .info .driver{font-size:16px; font-weight:700; color:var(--text); margin-top:3px;}
   .product-tag{
     display:inline-flex; align-items:center; gap:5px; margin-top:7px;
     background:var(--purple-dim); color:var(--purple); border:1px solid rgba(167,139,250,0.4);
@@ -361,7 +372,7 @@
   <div class="gate-box">
     <h1 class="display" style="font-size:22px; margin-bottom:6px;" id="loginTitle">Acesso</h1>
     <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Digite sua senha</p>
-    <input type="password" id="loginPassword" placeholder="Senha" style="text-align:center; letter-spacing:4px;">
+    <input type="password" id="loginPassword" placeholder="Senha" autocomplete="off" style="text-align:center; letter-spacing:4px;">
     <p id="loginError" style="color:var(--red); font-size:12px; display:none; margin:8px 0 0;">Senha incorreta.</p>
     <button class="btn" id="loginSubmit" style="margin-top:16px;">Entrar</button>
     <button class="btn secondary" id="loginBack" style="margin-top:10px;">Voltar</button>
@@ -476,9 +487,9 @@
   <div class="card" id="usersCard" style="display:none;">
     <h2>Cadastro de usuários</h2>
     <label for="userNameInput">Nome</label>
-    <input type="text" id="userNameInput" placeholder="Nome completo">
+    <input type="text" id="userNameInput" placeholder="Nome completo" autocomplete="off" name="not-a-name-field">
     <label for="userPasswordInput">Senha</label>
-    <input type="text" id="userPasswordInput" placeholder="Senha de acesso">
+    <input type="text" id="userPasswordInput" placeholder="Senha de acesso" autocomplete="new-password">
     <label for="userRoleSelect">Tipo de acesso</label>
     <select id="userRoleSelect">
       <option value="portaria">Portaria</option>
@@ -542,9 +553,9 @@
       <button class="modal-close" id="closeEdit">&times;</button>
     </div>
     <label for="editPlateInput">Placa</label>
-    <input type="text" id="editPlateInput" maxlength="8">
+    <input type="text" id="editPlateInput" maxlength="8" autocomplete="off">
     <label for="editDriverInput">Motorista</label>
-    <input type="text" id="editDriverInput">
+    <input type="text" id="editDriverInput" autocomplete="off">
     <button class="btn" id="saveEditBtn" style="margin-top:16px;">Salvar alterações</button>
     <button class="link-danger" id="cancelFromEditBtn" type="button">Cancelar este registro (desistência)</button>
   </div>
