@@ -361,7 +361,7 @@
     <p id="dbStatus" style="font-size:11px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; gap:6px;"></p>
     <button class="gate-btn" data-role="portaria">
       <span class="display">Portaria</span>
-      <span>Registrar entrada de caminhões</span>
+      <span>Registrar entrada de carros</span>
     </button>
     <button class="gate-btn" data-role="admin">
       <span class="display">Painel administrativo</span>
@@ -422,8 +422,9 @@
       <button class="btn" id="registerBtn">Registrar entrada no pátio</button>
     </div>
     <div class="card">
-      <h2>Caminhões no pátio agora</h2>
-      <button class="btn secondary" id="toggleHistPortaria" style="margin-bottom:18px;">Ver caminhões liberados</button>
+      <h2>Carros no pátio agora</h2>
+      <button class="btn secondary" id="toggleHistPortaria" style="margin-bottom:14px;">Ver carros liberados</button>
+      <input type="text" id="portariaSearchInput" placeholder="Buscar por placa ou motorista..." autocomplete="off" style="margin-bottom:18px;">
       <h3 class="sub-heading">Carregamento</h3>
       <div class="queue" id="queueBoxPortariaCarregamento"></div>
       <h3 class="sub-heading">Descarga</h3>
@@ -468,7 +469,7 @@
         <div class="stat"><b id="statLiberado">0</b><span>Liberados</span></div>
         <div class="stat"><b id="statCancelado" style="color:var(--red)">0</b><span>Cancelados</span></div>
       </div>
-      <button class="btn secondary" id="toggleHist" style="margin-top:16px;">Ver caminhões liberados</button>
+      <button class="btn secondary" id="toggleHist" style="margin-top:16px;">Ver carros liberados</button>
       <button class="btn secondary" id="toggleCanceled" style="margin-top:10px;">Ver cancelados</button>
       <button class="btn secondary" id="generateReport" style="margin-top:10px;">Gerar relatório para impressão</button>
     </div>
@@ -476,6 +477,7 @@
 
   <div class="card" id="queueCard">
     <h2 id="queueCardTitle">Fila do pátio</h2>
+    <input type="text" id="queueSearchInput" placeholder="Buscar por placa ou motorista..." autocomplete="off" style="margin-bottom:16px;">
     <div class="stat-row" id="viewerStats" style="display:none; margin-bottom:16px;">
       <div class="stat"><b id="statFilaV" style="color:var(--slate)">0</b><span>Aguardando</span></div>
       <div class="stat"><b id="statFaturandoV" style="color:var(--amber)">0</b><span>Faturando</span></div>
@@ -513,22 +515,26 @@
 
   <div class="card" id="historyCard" style="display:none;">
     <h2>Consulta de lançamentos</h2>
-    <label for="historyDateInput">Data</label>
+    <label for="historySearchInput">Buscar por placa ou motorista</label>
+    <input type="text" id="historySearchInput" placeholder="Ex: ABC1D23 ou João" autocomplete="off">
+    <label for="historyDateInput" style="margin-top:14px;">Data</label>
     <input type="date" id="historyDateInput">
     <div style="display:flex; gap:10px; margin-top:12px;">
       <button class="btn secondary" id="historyReportBtn" style="margin-top:0; width:auto; flex:1;">Relatório / Imprimir</button>
       <button class="btn secondary" id="historyPdfBtn" style="margin-top:0; width:auto; flex:1;">Baixar PDF do dia</button>
     </div>
+    <div id="historySearchNote" style="display:none; font-size:11px; color:var(--text-muted); margin-top:10px;">Mostrando resultados de todos os dias que combinam com a busca.</div>
     <div id="historyResults" style="margin-top:16px;"></div>
     <h3 class="sub-heading" style="margin-top:26px;">Log de alterações do dia</h3>
     <div id="historyLog"></div>
   </div>
 </main>
+</div>
 
 <div class="modal-overlay" id="releasedOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;">Caminhões liberados hoje</h2>
+      <h2 style="margin:0;">Carros liberados hoje</h2>
       <button class="modal-close" id="closeReleased">&times;</button>
     </div>
     <input type="text" id="searchPlate" placeholder="Buscar por placa ou motorista..." style="margin-bottom:14px;">
@@ -539,7 +545,7 @@
 <div class="modal-overlay" id="canceledOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;">Caminhões cancelados</h2>
+      <h2 style="margin:0;">Carros cancelados</h2>
       <button class="modal-close" id="closeCanceled">&times;</button>
     </div>
     <input type="text" id="searchCanceled" placeholder="Buscar por placa ou motorista..." style="margin-bottom:14px;">
@@ -560,7 +566,7 @@
 <div class="modal-overlay" id="editOverlay">
   <div class="modal" style="max-width:380px;">
     <div class="modal-head">
-      <h2 style="margin:0;">Editar caminhão</h2>
+      <h2 style="margin:0;">Editar carro</h2>
       <button class="modal-close" id="closeEdit">&times;</button>
     </div>
     <label for="editPlateInput">Placa</label>
@@ -570,7 +576,6 @@
     <button class="btn" id="saveEditBtn" style="margin-top:16px;">Salvar alterações</button>
     <button class="link-danger" id="cancelFromEditBtn" type="button">Cancelar este registro (desistência)</button>
   </div>
-</div>
 </div>
 
 <div class="modal-overlay" id="confirmOverlay">
@@ -859,11 +864,22 @@ function renderHistory(){
   const dateInput = document.getElementById('historyDateInput');
   if(!dateInput.value) dateInput.value = todayStr();
   const selectedDate = dateInput.value;
+  const query = document.getElementById('historySearchInput').value.trim().toUpperCase();
+  const isSearching = query.length > 0;
 
-  const dayTrucks = trucks.filter(t=>t.day===selectedDate).sort((a,b)=>a.queueNumber-b.queueNumber);
+  document.getElementById('historySearchNote').style.display = isSearching ? 'block' : 'none';
+
+  let dayTrucks;
+  if(isSearching){
+    dayTrucks = trucks.filter(t => t.plate.toUpperCase().includes(query) || t.driver.toUpperCase().includes(query));
+    dayTrucks.sort((a,b)=> b.day===a.day ? a.queueNumber-b.queueNumber : b.day.localeCompare(a.day));
+  } else {
+    dayTrucks = trucks.filter(t=>t.day===selectedDate).sort((a,b)=>a.queueNumber-b.queueNumber);
+  }
+
   const resultsBox = document.getElementById('historyResults');
   if(dayTrucks.length===0){
-    resultsBox.innerHTML = `<div class="empty-modal">Nenhum lançamento encontrado em ${fmtDateFull(selectedDate)}.</div>`;
+    resultsBox.innerHTML = `<div class="empty-modal">${isSearching ? 'Nenhum registro encontrado para essa busca.' : 'Nenhum lançamento encontrado em ' + fmtDateFull(selectedDate) + '.'}</div>`;
   } else {
     resultsBox.innerHTML = dayTrucks.map(t => `
       <div class="hist-item" onclick="openDetail('${t.id}')">
@@ -871,7 +887,7 @@ function renderHistory(){
           <span class="num-badge">#${t.queueNumber}</span>
           <div>
             <div><span class="p">${t.plate}</span> — ${t.driver} <span class="tag-op" style="margin-left:6px;">· ${opLabel(opOf(t))}</span></div>
-            <div class="d">entrou às ${fmtTime(t.times.fila)}${t.productType ? ' · produto: ' + t.productType : ''}</div>
+            <div class="d">${isSearching ? fmtDateFull(t.day) + ' · ' : ''}entrou às ${fmtTime(t.times.fila)}${t.productType ? ' · produto: ' + t.productType : ''}</div>
           </div>
         </div>
         <span class="pill st-${t.status}">${statusLabel(t.status)}</span>
@@ -988,11 +1004,11 @@ function saveTrucksAttempt(payload, attemptsLeft){
         setTimeout(()=>saveTrucksAttempt(payload, attemptsLeft-1), 900);
       } else {
         pendingTruckSave = false;
-        console.error('Não foi possível confirmar o salvamento dos caminhões após várias tentativas.');
+        console.error('Não foi possível confirmar o salvamento dos carros após várias tentativas.');
       }
     })
     .catch(err=>{
-      console.error('Falha ao salvar caminhões:', err);
+      console.error('Falha ao salvar carros:', err);
       if(attemptsLeft > 0){
         setTimeout(()=>saveTrucksAttempt(payload, attemptsLeft-1), 900);
       } else {
@@ -1088,7 +1104,7 @@ function advanceStatus(id, newStatus){
   if(!t) return;
   askConfirm(
     'Confirmar mudança de status',
-    `Alterar o status do caminhão ${t.plate} (${t.driver}) para "${statusLabel(newStatus)}"?`,
+    `Alterar o status do carro ${t.plate} (${t.driver}) para "${statusLabel(newStatus)}"?`,
     ()=>{
       const oldStatus = t.status;
       t.status = newStatus;
@@ -1113,7 +1129,7 @@ function cancelTruck(id){
   if(!t) return;
   askConfirm(
     'Cancelar registro',
-    `Confirma o CANCELAMENTO do caminhão ${t.plate} (${t.driver})? Use isso quando o motorista desistir do ${opLabel(opOf(t)).toLowerCase()}.`,
+    `Confirma o CANCELAMENTO do carro ${t.plate} (${t.driver})? Use isso quando o motorista desistir do ${opLabel(opOf(t)).toLowerCase()}.`,
     (reason)=>{
       const oldStatus = t.status;
       t.status = 'cancelado';
@@ -1183,7 +1199,7 @@ function render(){
     function paintPortariaQueue(containerId, list){
       const pbox = document.getElementById(containerId);
       if(list.length===0){
-        pbox.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum caminhão no momento</div>`;
+        pbox.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum carro no momento</div>`;
         return;
       }
       pbox.innerHTML = list.map(t => {
@@ -1209,8 +1225,13 @@ function render(){
       }).join('');
     }
 
-    paintPortariaQueue('queueBoxPortariaCarregamento', active.filter(t=>opOf(t)==='carregamento'));
-    paintPortariaQueue('queueBoxPortariaDescarga', active.filter(t=>opOf(t)==='descarga'));
+    const pQuery = document.getElementById('portariaSearchInput').value.trim().toUpperCase();
+    const activeFiltered = pQuery
+      ? active.filter(t => t.plate.toUpperCase().includes(pQuery) || t.driver.toUpperCase().includes(pQuery))
+      : active;
+
+    paintPortariaQueue('queueBoxPortariaCarregamento', activeFiltered.filter(t=>opOf(t)==='carregamento'));
+    paintPortariaQueue('queueBoxPortariaDescarga', activeFiltered.filter(t=>opOf(t)==='descarga'));
     return;
   }
 
@@ -1253,9 +1274,14 @@ function render(){
   document.getElementById('queueCardTitle').textContent = isDescargaTab ? 'Fila de descarga' : (showBothSections ? 'Fila do pátio' : 'Fila de carregamento');
   document.getElementById('queueColumnsWrapper').classList.toggle('split', showBothSections);
 
-  const baseList = showBothSections
+  const baseListRaw = showBothSections
     ? [...active, ...released].sort((a,b)=>a.times.fila-b.times.fila)
     : active;
+
+  const qQuery = document.getElementById('queueSearchInput').value.trim().toUpperCase();
+  const baseList = qQuery
+    ? baseListRaw.filter(t => t.plate.toUpperCase().includes(qQuery) || t.driver.toUpperCase().includes(qQuery))
+    : baseListRaw;
 
   const carregamentoList = baseList.filter(t=>opOf(t)==='carregamento');
   const descargaList = baseList.filter(t=>opOf(t)==='descarga');
@@ -1263,7 +1289,7 @@ function render(){
   function paintQueue(containerId, list){
     const box = document.getElementById(containerId);
     if(list.length===0){
-      box.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum caminhão no momento</div>`;
+      box.innerHTML = `<div class="empty"><div class="display">—</div>Nenhum carro no momento</div>`;
       return;
     }
     box.innerHTML = list.map(t => `
@@ -1304,7 +1330,7 @@ function renderReleasedList(){
 
   const list = document.getElementById('releasedList');
   if(released.length===0){
-    list.innerHTML = `<div class="empty-modal">Nenhum caminhão liberado encontrado.</div>`;
+    list.innerHTML = `<div class="empty-modal">Nenhum carro liberado encontrado.</div>`;
     return;
   }
   list.innerHTML = released.map(t=>`
@@ -1332,7 +1358,7 @@ function renderCanceledList(){
 
   const list = document.getElementById('canceledList');
   if(canceled.length===0){
-    list.innerHTML = `<div class="empty-modal">Nenhum caminhão cancelado encontrado.</div>`;
+    list.innerHTML = `<div class="empty-modal">Nenhum carro cancelado encontrado.</div>`;
     return;
   }
   list.innerHTML = canceled.map(t=>`
@@ -1722,6 +1748,9 @@ document.getElementById('adminLogout').addEventListener('click', logout);
 
 document.getElementById('registerUserBtn').addEventListener('click', registerUser);
 document.getElementById('historyDateInput').addEventListener('change', renderHistory);
+document.getElementById('historySearchInput').addEventListener('input', renderHistory);
+document.getElementById('portariaSearchInput').addEventListener('input', render);
+document.getElementById('queueSearchInput').addEventListener('input', render);
 document.getElementById('historyReportBtn').addEventListener('click', ()=>{
   const d = document.getElementById('historyDateInput').value || todayStr();
   generateReport(d);
@@ -1748,7 +1777,7 @@ function setupRealtimeSync(){
       hasLoadedTrucksOnce = true;
       render();
     }
-  }, err=>console.error('Falha na sincronização em tempo real dos caminhões:', err));
+  }, err=>console.error('Falha na sincronização em tempo real dos carros:', err));
 
   firestoreDb.collection('yardKV').doc(USERS_KEY).onSnapshot(doc=>{
     if(doc.exists && doc.data().value){
