@@ -81,13 +81,19 @@
   main.main-portaria{ grid-template-columns:360px 1fr; }
   @media (max-width:880px){ main{grid-template-columns:1fr;} main.main-portaria{grid-template-columns:1fr;} }
 
-  /* Coluna da esquerda fixa ao rolar — só em telas de desktop (largura maior que o ponto de quebra mobile) */
+  /* Cabeçalho fixo e coluna esquerda travada — só em telas de desktop (largura maior que o ponto de quebra mobile) */
   @media (min-width:881px){
+    .top-bar{
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--bg);
+    }
     main.main-portaria > .card:first-child,
     #adminExtras{
       position: sticky;
-      top: 20px;
-      max-height: calc(100vh - 40px);
+      top: var(--sticky-offset, 0px);
+      max-height: calc(100vh - var(--sticky-offset, 0px) - 20px);
       overflow-y: auto;
     }
   }
@@ -380,18 +386,20 @@
 </div>
 
 <div id="portariaScreen" style="display:none;">
-  <header>
-    <div class="brand">
-      <h1 class="display">Portaria</h1>
-      <span id="dateLabelPortaria"></span>
-    </div>
-    <div style="display:flex; align-items:center; gap:14px;">
-      <div class="sync"><span class="dot"></span><span id="syncLabelPortaria">sincronizado</span></div>
-      <span class="user-badge" id="userBadgePortaria"></span>
-      <button class="btn secondary small" id="portariaLogout">Sair</button>
-    </div>
-  </header>
-  <div class="hazard"></div>
+  <div class="top-bar">
+    <header>
+      <div class="brand">
+        <h1 class="display">Portaria</h1>
+        <span id="dateLabelPortaria"></span>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div class="sync"><span class="dot"></span><span id="syncLabelPortaria">sincronizado</span></div>
+        <span class="user-badge" id="userBadgePortaria"></span>
+        <button class="btn secondary small" id="portariaLogout">Sair</button>
+      </div>
+    </header>
+    <div class="hazard"></div>
+  </div>
   <main class="main-portaria">
     <div class="card">
       <h2>Registrar chegada</h2>
@@ -404,7 +412,7 @@
       <input type="text" id="plateInput" maxlength="8" placeholder="ABC1D23" list="platesList" autocomplete="off">
       <datalist id="platesList"></datalist>
       <label for="driverInput">Motorista</label>
-      <input type="text" id="driverInput" placeholder="Nome completo" list="driverNamesList" autocomplete="off">
+      <input type="text" id="driverInput" placeholder="Nome completo" list="driverNamesList" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
       <datalist id="driverNamesList"></datalist>
       <div id="productTypeGroup" style="display:none;">
         <label for="productTypeInput">Tipo de produto</label>
@@ -424,6 +432,7 @@
 </div>
 
 <div id="adminScreen" style="display:none;">
+<div class="top-bar">
 <header>
   <div class="brand">
     <h1 class="display" id="screenTitle">Painel Administrativo</h1>
@@ -436,6 +445,7 @@
   </div>
 </header>
 <div class="hazard"></div>
+</div>
 
 <main>
   <div id="adminExtras" style="display:flex; flex-direction:column; gap:20px;">
@@ -487,7 +497,7 @@
   <div class="card" id="usersCard" style="display:none;">
     <h2>Cadastro de usuários</h2>
     <label for="userNameInput">Nome</label>
-    <input type="text" id="userNameInput" placeholder="Nome completo" autocomplete="off" name="not-a-name-field">
+    <input type="text" id="userNameInput" placeholder="Nome completo" autocomplete="off" name="not-a-name-field" readonly onfocus="this.removeAttribute('readonly')">
     <label for="userPasswordInput">Senha</label>
     <input type="text" id="userPasswordInput" placeholder="Senha de acesso" autocomplete="new-password">
     <label for="userRoleSelect">Tipo de acesso</label>
@@ -555,7 +565,7 @@
     <label for="editPlateInput">Placa</label>
     <input type="text" id="editPlateInput" maxlength="8" autocomplete="off">
     <label for="editDriverInput">Motorista</label>
-    <input type="text" id="editDriverInput" autocomplete="off">
+    <input type="text" id="editDriverInput" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
     <button class="btn" id="saveEditBtn" style="margin-top:16px;">Salvar alterações</button>
     <button class="link-danger" id="cancelFromEditBtn" type="button">Cancelar este registro (desistência)</button>
   </div>
@@ -755,7 +765,22 @@ function showScreen(screen){
   const badgeText = currentUser ? currentUser.name : '';
   const bp = document.getElementById('userBadgePortaria'); if(bp) bp.textContent = badgeText;
   const ba = document.getElementById('userBadgeAdmin'); if(ba) ba.textContent = badgeText;
+
+  updateStickyOffset();
 }
+
+function updateStickyOffset(){
+  requestAnimationFrame(()=>{
+    const bars = document.querySelectorAll('.top-bar');
+    let visibleBar = null;
+    bars.forEach(bar=>{ if(bar.offsetParent !== null) visibleBar = bar; });
+    const height = visibleBar ? visibleBar.getBoundingClientRect().height : 0;
+    document.documentElement.style.setProperty('--sticky-offset', height + 'px');
+  });
+}
+
+window.addEventListener('resize', updateStickyOffset);
+setTimeout(updateStickyOffset, 600);
 
 const SESSION_KEY = 'patio_session';
 
@@ -1227,7 +1252,7 @@ function render(){
   document.getElementById('queueCardTitle').textContent = isDescargaTab ? 'Fila de descarga' : (showBothSections ? 'Fila do pátio' : 'Fila de carregamento');
   document.getElementById('queueColumnsWrapper').classList.toggle('split', showBothSections);
 
-  const baseList = isViewer
+  const baseList = showBothSections
     ? [...active, ...released].sort((a,b)=>a.times.fila-b.times.fila)
     : active;
 
