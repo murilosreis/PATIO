@@ -28,6 +28,8 @@
     --teal-dim:#123331;
     --purple:#a78bfa;
     --purple-dim:#26203f;
+    --magenta:#e879b9;
+    --magenta-dim:#3a1f30;
   }
   *{box-sizing:border-box;}
   body{
@@ -141,7 +143,7 @@
   .truck.st-fila::before{background:var(--slate);}
   .truck.st-faturando::before{background:var(--amber);}
   .truck.st-carregando::before{background:var(--teal);}
-  .truck.st-descarregando::before{background:var(--purple);}
+  .truck.st-descarregando::before{background:var(--magenta);}
   .truck.st-liberado::before{background:var(--green);}
   .truck.st-cancelado::before{background:var(--red);}
   .truck.op-carregamento{ background: linear-gradient(180deg, rgba(62,143,247,0.08), rgba(62,143,247,0.02)), var(--surface); }
@@ -174,11 +176,12 @@
   .pill.st-fila{background:var(--slate-dim); color:var(--slate);}
   .pill.st-faturando{background:var(--amber-dim); color:var(--amber);}
   .pill.st-carregando{background:var(--teal-dim); color:var(--teal);}
-  .pill.st-descarregando{background:var(--purple-dim); color:var(--purple);}
+  .pill.st-descarregando{background:var(--magenta-dim); color:var(--magenta);}
   .pill.st-liberado{background:var(--green-dim); color:var(--green);}
   .pill.st-cancelado{background:var(--red-dim); color:var(--red);}
   .pill.op-carregamento{background:var(--blue-dim); color:var(--blue);}
   .pill.op-descarga{background:var(--purple-dim); color:var(--purple);}
+  .tag-op{ color:var(--text-muted); font-size:11px; font-weight:500; }
 
   .op-filter{display:flex; gap:6px; margin-bottom:14px;}
   .sub-heading{
@@ -455,7 +458,7 @@
       <div class="stat"><b id="statFilaV" style="color:var(--slate)">0</b><span>Aguardando</span></div>
       <div class="stat"><b id="statFaturandoV" style="color:var(--amber)">0</b><span>Faturando</span></div>
       <div class="stat"><b id="statCarregandoV" style="color:var(--teal)">0</b><span>Carregando</span></div>
-      <div class="stat"><b id="statDescarregandoV" style="color:var(--purple)">0</b><span>Descarregando</span></div>
+      <div class="stat"><b id="statDescarregandoV" style="color:var(--magenta)">0</b><span>Descarregando</span></div>
       <div class="stat"><b id="statLiberadoV" style="color:var(--green)">0</b><span>Liberados</span></div>
     </div>
     <div id="queueColumnsWrapper">
@@ -490,6 +493,10 @@
     <h2>Consulta de lançamentos</h2>
     <label for="historyDateInput">Data</label>
     <input type="date" id="historyDateInput">
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="btn secondary" id="historyReportBtn" style="margin-top:0; width:auto; flex:1;">Relatório / Imprimir</button>
+      <button class="btn secondary" id="historyPdfBtn" style="margin-top:0; width:auto; flex:1;">Baixar PDF do dia</button>
+    </div>
     <div id="historyResults" style="margin-top:16px;"></div>
     <h3 class="sub-heading" style="margin-top:26px;">Log de alterações do dia</h3>
     <div id="historyLog"></div>
@@ -739,10 +746,28 @@ function showScreen(screen){
   const ba = document.getElementById('userBadgeAdmin'); if(ba) ba.textContent = badgeText;
 }
 
+const SESSION_KEY = 'patio_session';
+
+function saveSession(){
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); }catch(e){}
+}
+
+function loadSession(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function clearSession(){
+  try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+}
+
 function attemptLogin(){
   const val = document.getElementById('loginPassword').value.trim();
   if(val === MASTER_PASSWORD){
     currentUser = { id:'master', name:'Administrador', password: MASTER_PASSWORD, role: pendingRole };
+    saveSession();
     showScreen(pendingRole);
     render();
     return;
@@ -753,6 +778,7 @@ function attemptLogin(){
     return;
   }
   currentUser = match;
+  saveSession();
   showScreen(match.role);
   render();
 }
@@ -760,6 +786,7 @@ function attemptLogin(){
 function logout(){
   currentUser = null;
   pendingRole = null;
+  clearSession();
   showScreen('gate');
 }
 
@@ -806,7 +833,7 @@ function renderHistory(){
         <div style="display:flex; align-items:center;">
           <span class="num-badge">#${t.queueNumber}</span>
           <div>
-            <div><span class="p">${t.plate}</span> — ${t.driver} <span class="pill op-${opOf(t)}" style="margin-left:6px;">${opLabel(opOf(t))}</span></div>
+            <div><span class="p">${t.plate}</span> — ${t.driver} <span class="tag-op" style="margin-left:6px;">· ${opLabel(opOf(t))}</span></div>
             <div class="d">entrou às ${fmtTime(t.times.fila)}${t.productType ? ' · produto: ' + t.productType : ''}</div>
           </div>
         </div>
@@ -1177,15 +1204,17 @@ function render(){
   }
 
   const isViewer = currentScreen==='viewer';
+  const isGeralTab = currentScreen==='admin' && currentRole==='geral';
   const isDescargaTab = currentScreen==='admin' && currentRole==='descarga';
-  const isCarregamentoTabs = currentScreen==='admin' && ['geral','faturamento','expedicao'].includes(currentRole);
+  const isCarregamentoOnlyTabs = currentScreen==='admin' && ['faturamento','expedicao'].includes(currentRole);
+  const showBothSections = isViewer || isGeralTab;
 
-  document.getElementById('carregamentoSection').style.display = (isViewer || isCarregamentoTabs) ? 'block' : 'none';
-  document.getElementById('descargaSection').style.display = (isViewer || isDescargaTab) ? 'block' : 'none';
-  document.getElementById('carregamentoSubHeading').style.display = isViewer ? 'block' : 'none';
-  document.getElementById('descargaSubHeading').style.display = isViewer ? 'block' : 'none';
-  document.getElementById('queueCardTitle').textContent = isDescargaTab ? 'Fila de descarga' : (isViewer ? 'Fila do pátio' : 'Fila de carregamento');
-  document.getElementById('queueColumnsWrapper').classList.toggle('split', isViewer);
+  document.getElementById('carregamentoSection').style.display = (showBothSections || isCarregamentoOnlyTabs) ? 'block' : 'none';
+  document.getElementById('descargaSection').style.display = (showBothSections || isDescargaTab) ? 'block' : 'none';
+  document.getElementById('carregamentoSubHeading').style.display = showBothSections ? 'block' : 'none';
+  document.getElementById('descargaSubHeading').style.display = showBothSections ? 'block' : 'none';
+  document.getElementById('queueCardTitle').textContent = isDescargaTab ? 'Fila de descarga' : (showBothSections ? 'Fila do pátio' : 'Fila de carregamento');
+  document.getElementById('queueColumnsWrapper').classList.toggle('split', showBothSections);
 
   const baseList = isViewer
     ? [...active, ...released].sort((a,b)=>a.times.fila-b.times.fila)
@@ -1209,7 +1238,7 @@ function render(){
           ${t.productType ? `<div class="product-tag">📦 ${t.productType}</div>` : ''}
           ${isOvernight(t) ? `<div class="overnight-tag">⚠️ Desde ${fmtDateFull(t.day)} — virou o dia</div>` : ''}
           <div class="meta">
-            <span class="pill op-${opOf(t)}">${opLabel(opOf(t))}</span>
+            <span class="tag-op">${opLabel(opOf(t))}</span>
             <span class="pill st-${t.status}">${statusLabel(t.status)}</span>
             <span>entrou às ${fmtTime(t.times.fila)}</span>
             <span>${t.status==='liberado' ? 'saiu às ' + fmtTime(t.times.liberado) : 'há ' + elapsed(t.times[t.status])}</span>
@@ -1246,7 +1275,7 @@ function renderReleasedList(){
       <div style="display:flex; align-items:center;">
         <span class="num-badge">#${t.queueNumber}</span>
         <div>
-          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="pill op-${opOf(t)}" style="margin-left:6px;">${opLabel(opOf(t))}</span></div>
+          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="tag-op" style="margin-left:6px;">· ${opLabel(opOf(t))}</span></div>
           <div class="d">saiu às ${fmtTime(t.times.liberado)} · permaneceu ${formatDuration(Math.round((t.times.liberado - t.times.fila)/60000))}</div>
         </div>
       </div>
@@ -1274,7 +1303,7 @@ function renderCanceledList(){
       <div style="display:flex; align-items:center;">
         <span class="num-badge">#${t.queueNumber}</span>
         <div>
-          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="pill op-${opOf(t)}" style="margin-left:6px;">${opLabel(opOf(t))}</span></div>
+          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="tag-op" style="margin-left:6px;">· ${opLabel(opOf(t))}</span></div>
           <div class="d">cancelado às ${fmtTime(t.times.cancelado)}${t.cancelReason ? ' · motivo: ' + t.cancelReason : ''}</div>
         </div>
       </div>
@@ -1352,8 +1381,9 @@ function fmtDateFull(dayStr){
   return `${d}/${m}/${y}`;
 }
 
-function buildReportRows(){
-  const sorted = trucks.slice().sort((a,b)=>{
+function buildReportRows(dateFilter){
+  const filtered = dateFilter ? trucks.filter(t=>t.day===dateFilter) : trucks.slice();
+  const sorted = filtered.sort((a,b)=>{
     if(a.day !== b.day) return b.day.localeCompare(a.day);
     return a.queueNumber - b.queueNumber;
   });
@@ -1401,8 +1431,11 @@ function buildRowsTable(list, kind){
   return rowsHtml;
 }
 
-function generateReport(){
-  const sorted = buildReportRows();
+let currentReportDateFilter = null;
+
+function generateReport(dateFilter){
+  currentReportDateFilter = dateFilter || null;
+  const sorted = buildReportRows(dateFilter);
   const carregamentoRows = sorted.filter(t=>opOf(t)==='carregamento');
   const descargaRows = sorted.filter(t=>opOf(t)==='descarga');
 
@@ -1410,12 +1443,13 @@ function generateReport(){
   const descargaHtml = buildRowsTable(descargaRows, 'descarga');
 
   const generatedAt = new Date().toLocaleString('pt-BR');
-  const totalLiberados = trucks.filter(t=>t.status==='liberado').length;
+  const totalLiberados = sorted.filter(t=>t.status==='liberado').length;
+  const periodoLabel = dateFilter ? `Dia: ${fmtDateFull(dateFilter)}` : 'Todos os dias';
 
   document.getElementById('reportPage').innerHTML = `
     <h1>Relatório de acessos — Pátio</h1>
-    <div class="r-meta">Gerado em ${generatedAt}</div>
-    <div class="r-summary">Total de registros: ${trucks.length} · Liberados: ${totalLiberados} · Em andamento: ${trucks.length - totalLiberados}</div>
+    <div class="r-meta">Gerado em ${generatedAt} · ${periodoLabel}</div>
+    <div class="r-summary">Total de registros: ${sorted.length} · Liberados: ${totalLiberados} · Em andamento: ${sorted.length - totalLiberados}</div>
 
     <h2 class="r-section-title r-section-carregamento">Carregamento</h2>
     <table>
@@ -1443,14 +1477,14 @@ function generateReport(){
   document.getElementById('reportOverlay').classList.add('open');
 }
 
-function downloadReportPdf(){
+function downloadReportPdf(dateFilter){
   if(!window.jspdf){
     alert('Não foi possível carregar o gerador de PDF agora. Você ainda pode usar o botão "Imprimir" e escolher "Salvar como PDF" na janela de impressão.');
     return;
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'pt' });
-  const sorted = buildReportRows();
+  const sorted = buildReportRows(dateFilter);
   const carregamentoRows = sorted.filter(t=>opOf(t)==='carregamento');
   const descargaRows = sorted.filter(t=>opOf(t)==='descarga');
 
@@ -1511,7 +1545,7 @@ function downloadReportPdf(){
     headStyles: { fillColor: [109,63,201] },
   });
 
-  doc.save('relatorio-acessos-patio.pdf');
+  doc.save(dateFilter ? `relatorio-acessos-patio-${dateFilter}.pdf` : 'relatorio-acessos-patio.pdf');
 }
 
 document.getElementById('registerBtn').addEventListener('click', registerTruck);
@@ -1569,11 +1603,11 @@ document.getElementById('canceledOverlay').addEventListener('click', e=>{
   if(e.target.id==='canceledOverlay') e.target.classList.remove('open');
 });
 document.getElementById('searchCanceled').addEventListener('input', renderCanceledList);
-document.getElementById('generateReport').addEventListener('click', generateReport);
+document.getElementById('generateReport').addEventListener('click', ()=> generateReport());
 document.getElementById('reportClose').addEventListener('click', ()=>{
   document.getElementById('reportOverlay').classList.remove('open');
 });
-document.getElementById('reportDownloadPdf').addEventListener('click', downloadReportPdf);
+document.getElementById('reportDownloadPdf').addEventListener('click', ()=> downloadReportPdf(currentReportDateFilter));
 document.getElementById('reportPrint').addEventListener('click', ()=> window.print());
 document.getElementById('closeReleased').addEventListener('click', ()=>{
   document.getElementById('releasedOverlay').classList.remove('open');
@@ -1646,6 +1680,14 @@ document.getElementById('adminLogout').addEventListener('click', logout);
 
 document.getElementById('registerUserBtn').addEventListener('click', registerUser);
 document.getElementById('historyDateInput').addEventListener('change', renderHistory);
+document.getElementById('historyReportBtn').addEventListener('click', ()=>{
+  const d = document.getElementById('historyDateInput').value || todayStr();
+  generateReport(d);
+});
+document.getElementById('historyPdfBtn').addEventListener('click', ()=>{
+  const d = document.getElementById('historyDateInput').value || todayStr();
+  downloadReportPdf(d);
+});
 document.getElementById('userPasswordInput').addEventListener('keydown', e=>{ if(e.key==='Enter') registerUser(); });
 
 function setupRealtimeSync(){
@@ -1692,7 +1734,12 @@ function setupRealtimeSync(){
 }
 
 async function init(){
-  showScreen('gate');
+  const savedSession = loadSession();
+  if(savedSession && savedSession.role){
+    currentUser = savedSession;
+  } else {
+    showScreen('gate');
+  }
   const statusEl = document.getElementById('dbStatus');
   if(firebaseReady){
     statusEl.innerHTML = '<span class="dot"></span><span style="color:var(--green);">Conectado ao banco de dados</span>';
@@ -1703,6 +1750,10 @@ async function init(){
   await loadTrucks();
   await loadAuditLog();
   setupRealtimeSync();
+  if(currentUser){
+    showScreen(currentUser.role);
+    render();
+  }
 }
 init();
 
