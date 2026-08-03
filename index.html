@@ -1249,8 +1249,8 @@ function render(){
     `).join('');
   }
 
-  if(isViewer || isCarregamentoTabs) paintQueue('queueBoxCarregamento', carregamentoList);
-  if(isViewer || isDescargaTab) paintQueue('queueBoxDescarga', descargaList);
+  if(showBothSections || isCarregamentoOnlyTabs) paintQueue('queueBoxCarregamento', carregamentoList);
+  if(showBothSections || isDescargaTab) paintQueue('queueBoxDescarga', descargaList);
 
   renderReleasedList();
   renderCanceledList();
