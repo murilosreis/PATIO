@@ -423,6 +423,7 @@
     </div>
     <div class="card">
       <h2>Caminhões no pátio agora</h2>
+      <button class="btn secondary" id="toggleHistPortaria" style="margin-bottom:18px;">Ver caminhões liberados</button>
       <h3 class="sub-heading">Carregamento</h3>
       <div class="queue" id="queueBoxPortariaCarregamento"></div>
       <h3 class="sub-heading">Descarga</h3>
@@ -1623,6 +1624,11 @@ document.getElementById('roleSwitch').addEventListener('click', e=>{
 });
 
 document.getElementById('toggleHist').addEventListener('click', ()=>{
+  document.getElementById('searchPlate').value = '';
+  document.getElementById('releasedOverlay').classList.add('open');
+  renderReleasedList();
+});
+document.getElementById('toggleHistPortaria').addEventListener('click', ()=>{
   document.getElementById('searchPlate').value = '';
   document.getElementById('releasedOverlay').classList.add('open');
   renderReleasedList();
