@@ -591,7 +591,7 @@
     </div>
     <div style="display:flex; gap:10px; margin-top:18px;">
       <button class="btn secondary" id="confirmCancelBtn" style="margin-top:0;">Voltar</button>
-      <button class="btn" id="confirmOkBtn" style="margin-top:0;">Confirmar</button>
+      <button class="btn" id="confirmOkBtn" style="margin-top:0; flex:1.4; background:var(--green); color:#08210f; font-size:16px; padding:14px; box-shadow:0 0 0 3px rgba(52,199,123,0.25);">✓ Confirmar</button>
     </div>
   </div>
 </div>
@@ -786,6 +786,18 @@ function updateStickyOffset(){
 }
 
 window.addEventListener('resize', updateStickyOffset);
+
+// Quando o usuário volta pro app (ex: depois de usar outro app e retornar),
+// força uma sincronização imediata em vez de esperar o navegador decidir sozinho.
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    lastLocalChangeTs = 0; // libera a leitura mesmo se um salvamento antigo ainda estivesse "travando"
+    loadUsers();
+    loadTrucks();
+    loadAuditLog();
+    updateStickyOffset();
+  }
+});
 setTimeout(updateStickyOffset, 600);
 
 const SESSION_KEY = 'patio_session';
