@@ -944,7 +944,13 @@ function renderUsersList(){
 }
 
 
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function toLocalDateStr(date){
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth()+1).padStart(2,'0');
+  const dd = String(date.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function todayStr(){ return toLocalDateStr(new Date()); }
 function fmtTime(ts){ return new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function elapsed(ts){
   const s = Math.floor((Date.now()-ts)/1000);
@@ -1159,11 +1165,11 @@ function cancelTruck(id){
 function opOf(t){ return t.operation || 'carregamento'; }
 
 function releasedDay(t){
-  return t.times.liberado ? new Date(t.times.liberado).toISOString().slice(0,10) : null;
+  return t.times.liberado ? toLocalDateStr(new Date(t.times.liberado)) : null;
 }
 
 function cancelDay(t){
-  return t.times.cancelado ? new Date(t.times.cancelado).toISOString().slice(0,10) : null;
+  return t.times.cancelado ? toLocalDateStr(new Date(t.times.cancelado)) : null;
 }
 
 function isOvernight(t){
@@ -1338,25 +1344,36 @@ function renderReleasedList(){
   const query = document.getElementById('searchPlate').value.trim().toUpperCase();
   let released = trucks.filter(t=>t.status==='liberado' && releasedDay(t)===today);
   if(query) released = released.filter(t => t.plate.includes(query) || t.driver.toUpperCase().includes(query));
-  released.sort((a,b)=>b.times.liberado-a.times.liberado);
 
   const list = document.getElementById('releasedList');
   if(released.length===0){
     list.innerHTML = `<div class="empty-modal">Nenhum carro liberado encontrado.</div>`;
     return;
   }
-  list.innerHTML = released.map(t=>`
-    <div class="hist-item" onclick="openDetail('${t.id}')">
-      <div style="display:flex; align-items:center;">
-        <span class="num-badge">#${t.queueNumber}</span>
-        <div>
-          <div><span class="p">${t.plate}</span> — ${t.driver} <span class="tag-op" style="margin-left:6px;">· ${opLabel(opOf(t))}</span></div>
-          <div class="d">saiu às ${fmtTime(t.times.liberado)} · permaneceu ${formatDuration(Math.round((t.times.liberado - t.times.fila)/60000))}</div>
+
+  function renderGroup(items, label, headingClass){
+    if(items.length===0) return '';
+    const sorted = items.slice().sort((a,b)=>a.times.liberado-b.times.liberado);
+    const rows = sorted.map(t=>`
+      <div class="hist-item" onclick="openDetail('${t.id}')">
+        <div style="display:flex; align-items:center;">
+          <span class="num-badge">#${t.queueNumber}</span>
+          <div>
+            <div><span class="p">${t.plate}</span> — ${t.driver}</div>
+            <div class="d">saiu às ${fmtTime(t.times.liberado)} · permaneceu ${formatDuration(Math.round((t.times.liberado - t.times.fila)/60000))}</div>
+          </div>
         </div>
+        <span class="pill st-liberado">Liberado</span>
       </div>
-      <span class="pill st-liberado">Liberado</span>
-    </div>
-  `).join('');
+    `).join('');
+    return `<h3 class="sub-heading ${headingClass}">${label} <span style="color:var(--text-muted); font-weight:400;">(ordem de saída)</span></h3>${rows}`;
+  }
+
+  const carregamentoItems = released.filter(t=>opOf(t)==='carregamento');
+  const descargaItems = released.filter(t=>opOf(t)==='descarga');
+
+  list.innerHTML = renderGroup(carregamentoItems, 'Carregamento', 'op-heading-carregamento')
+    + renderGroup(descargaItems, 'Descarga', 'op-heading-descarga');
 }
 
 function renderCanceledList(){
